@@ -1,0 +1,7 @@
+name = "SDPSymmetryReduction"
+uuid = "56ed78d6-6c87-4b01-a4f7-e143c302c7a0"
+authors = ["Daniel Brosch <Daniel.Brosch@outlook.com> and contributors"]
+version = "0.1.0"
+
+[compat]
+julia = "1"
