@@ -1,6 +1,6 @@
 # SDPSymmetryReduction
 
-Numerically reduces semidefinite programming problems, by exploiting their symmetry, when given in vectorized standard form
+Numerically reduces semidefinite programming problems by exploiting their symmetry. Input is in vectorized standard form
 ```
 sup/inf     dot(C,x)
 subject to  Ax = b,
@@ -15,11 +15,11 @@ pkg> add SDPSymmetryReduction  # Press ']' to enter the Pkg REPL mode.
 ```
 
 ## Determining an admissible subspace
-The function `admPartSubspace` determines an optimal admissible partition subspace for the problem. This is done using a randomized Jordan-reduction algorithm, and it returns a Jordan algebra (closed under linear combinations and squaring). SDPs can be restricted to such a subspace without changing its optimal value.
+The function `admPartSubspace` determines an optimal admissible partition subspace for the problem. This is done using a randomized Jordan-reduction algorithm, and it returns a Jordan algebra (closed under linear combinations and squaring). SDPs can be restricted to such a subspace without changing their optimal value.
 
 Given `C,A` and `b`, `admPartSubspace(C,a,b)` returns a `Partition P` with `P.n` giving the number of parts of the partition, and `P.P` returning an integer valued matrix (same size at `x` in matrix form) with entries `1,...,n` defining the partition.
 
-## Block diagonalizing a Jordan-algebra
+## Block-diagonalizing a Jordan-algebra
 The function `blockDiagonalize` determines a block-diagonalization of a (Jordan)-algebra given by a partition `P` using a randomized algorithm.
 
 `blockDiagonalize(P)` returns a real block-diagonalization `blkd`, if it exists, otherwise `nothing`.
