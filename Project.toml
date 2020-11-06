@@ -3,5 +3,9 @@ uuid = "56ed78d6-6c87-4b01-a4f7-e143c302c7a0"
 authors = ["Daniel Brosch <Daniel.Brosch@outlook.com> and contributors"]
 version = "0.1.0"
 
+[deps]
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+
 [compat]
 julia = "1"
