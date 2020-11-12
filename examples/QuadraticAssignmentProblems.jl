@@ -96,4 +96,4 @@ end
 include("ReduceAndSolveJuMP.jl")
 qap = loadQAP("examples\\esc16j.dat")
 prg = generateSDP(qap.A, qap.B)
-@show reduceAndSolve(prg.C, prg.A, prg.b, true)
+@show reduceAndSolve(prg.C, prg.A, prg.b, MathOptInterface.MIN_SENSE, true)

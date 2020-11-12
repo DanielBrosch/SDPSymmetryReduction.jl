@@ -6,90 +6,104 @@ using SDPSymmetryReduction
 using JuMP
 using MosekTools
 using SparseArrays
+using MathOptInterface
 
-function reduceAndSolve(C, A, b, verbose = false, complex = false)
+function reduceAndSolve(C, A, b, objSense = MathOptInterface.MAX_SENSE, verbose = false, complex = false, limitSize = 3000)
     tmd = @timed admPartSubspace(C, A, b, verbose)
     P = tmd.value
     jordanTime = tmd.time
 
-    tmd = @timed blockDiagonalize(P, verbose; complex = complex)
-    blkD = tmd.value
-    blkDTime = tmd.time
+    if P.n <= limitSize
 
-    if blkD == nothing
-        # Either random/rounding error, or complex numbers needed
-        return nothing
-    end
+        tmd = @timed blockDiagonalize(P, verbose; complex = complex)
+        blkD = tmd.value
+        blkDTime = tmd.time
 
-    # solve with solver of choice
-    m = nothing
-    if verbose
-        m = Model(Mosek.Optimizer)
-    else
-        m = Model(optimizer_with_attributes(Mosek.Optimizer, "MSK_IPAR_LOG" => 0))
-    end
+        if blkD == nothing
+            # Either random/rounding error, or complex numbers needed
+            return nothing
+        end
 
-    # >= 0 because the SDP-matrices should be entry-wise nonnegative
-    x = @variable(m, x[1:P.n] >= 0)
+        # solve with solver of choice
+        m = nothing
+        if verbose
+            m = Model(Mosek.Optimizer)
+        else
+            m = Model(optimizer_with_attributes(Mosek.Optimizer, "MSK_IPAR_LOG" => 0))
+        end
 
-    PMat = hcat([sparse(vec(P.P .== i)) for i = 1:P.n]...)
+        # >= 0 because the SDP-matrices should be entry-wise nonnegative
+        x = @variable(m, x[1:P.n] >= 0)
 
-    # Reduce the number of constraints
-    newConstraints = Float64.(hcat(A * PMat, b))
-    newConstraints = sparse(svd(Matrix(newConstraints)').U[:, 1:rank(newConstraints)]')
-    droptol!(newConstraints, 1e-8)
+        PMat = hcat([sparse(vec(P.P .== i)) for i = 1:P.n]...)
 
-    newA = newConstraints[:, 1:end-1]
-    newB = newConstraints[:, end]
-    newC = C' * PMat
+        # Reduce the number of constraints
+        newConstraints = Float64.(hcat(A * PMat, b))
+        newConstraints = sparse(svd(Matrix(newConstraints)').U[:, 1:rank(newConstraints)]')
+        droptol!(newConstraints, 1e-8)
 
-    @constraint(m, newA * x .== newB)
-    @objective(m, Max, newC * x)
+        newA = newConstraints[:, 1:end-1]
+        newB = newConstraints[:, end]
+        newC = C' * PMat
 
-    for i = 1:length(blkD[1])
-        blkExpr =
-            x[1] .* (
-                complex ?
-                [
-                    real(blkD[2][1][i]) -imag(blkD[2][1][i])
-                    imag(blkD[2][1][i]) real(blkD[2][1][i])
-                ] :
-                blkD[2][1][i]
-            )
-        for j = 2:P.n
-            add_to_expression!.(
-                blkExpr,
-                x[j] .* (
+        @constraint(m, newA * x .== newB)
+        @objective(m, objSense, newC * x)
+
+        for i = 1:length(blkD[1])
+            blkExpr =
+                x[1] .* (
                     complex ?
                     [
-                        real(blkD[2][j][i]) -imag(blkD[2][j][i])
-                        imag(blkD[2][j][i]) real(blkD[2][j][i])
+                        real(blkD[2][1][i]) -imag(blkD[2][1][i])
+                        imag(blkD[2][1][i]) real(blkD[2][1][i])
                     ] :
-                    blkD[2][j][i]
-                ),
-            )
+                    blkD[2][1][i]
+                )
+            for j = 2:P.n
+                add_to_expression!.(
+                    blkExpr,
+                    x[j] .* (
+                        complex ?
+                        [
+                            real(blkD[2][j][i]) -imag(blkD[2][j][i])
+                            imag(blkD[2][j][i]) real(blkD[2][j][i])
+                        ] :
+                        blkD[2][j][i]
+                    ),
+                )
+            end
+            if size(blkExpr, 1) > 1
+                @constraint(m, blkExpr in PSDCone())
+            else
+                @constraint(m, blkExpr .>= 0)
+            end
         end
-        if size(blkExpr, 1) > 1
-            @constraint(m, blkExpr in PSDCone())
-        else
-            @constraint(m, blkExpr .>= 0)
+
+        tmd = @timed optimize!(m)
+        optTime = tmd.time
+
+        if Int64(termination_status(m)) != 1
+            @show termination_status(m)
+            @error("Solve error.")
         end
+        return (
+            jTime = jordanTime,
+            blkTime = blkDTime,
+            solveTime = optTime,
+            optVal = newC * value.(x),
+            blkSize = blkD[1],
+            originalSize = size(P.P, 1),
+            newSize = P.n
+        )
     end
-
-    tmd = @timed optimize!(m)
-    optTime = tmd.time
-
-    if Int64(termination_status(m)) != 1
-        @show termination_status(m)
-        @error("Solve error.")
-    end
-
     return (
         jTime = jordanTime,
-        blkTime = blkDTime,
-        solveTime = optTime,
-        optVal = newC * value.(x),
-        blkSize = blkD[1],
+        blkTime = 0,
+        solveTime = 0,
+        optVal = 0,
+        blkSize = 0,
         originalSize = size(P.P, 1),
+        newSize = P.n
     )
+
 end
