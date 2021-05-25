@@ -15,7 +15,7 @@ end
 # Round numbers near zero to zero
 function roundToZero(f::Number)
     if abs(f) < 1e-8
-        return 0
+        return 0.0
     end
     return f
 end
