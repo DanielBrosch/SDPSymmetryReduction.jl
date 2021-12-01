@@ -1,5 +1,12 @@
 # SDPSymmetryReduction
 
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://DanielBrosch.github.io/SDPSymmetryReduction.jl/stable)
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://DanielBrosch.github.io/SDPSymmetryReduction.jl/dev)
+[![Build Status](https://github.com/DanielBrosch/SDPSymmetryReduction.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/DanielBrosch/SDPSymmetryReduction.jl/actions/workflows/CI.yml?query=branch%3Amain)
+[![Coverage](https://codecov.io/gh/DanielBrosch/SDPSymmetryReduction.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/DanielBrosch/SDPSymmetryReduction.jl)
+
+# SDPSymmetryReduction
+
 Numerically reduces semidefinite programming problems by exploiting their symmetry. Input is in vectorized standard form
 ```
 sup/inf     dot(C,x)
@@ -89,3 +96,7 @@ There are more examples in the folder `examples`:
 * `ReduceAndSolveJuMP.jl`: A more advanced function for fully reducing and solving SDPs with JuMP and Mosek, including support for complex block-diagonalizations.
 * `ErdosRenyiThetaFunction.jl`: A full example calculating the Theta'-function of Erdos-Renyi graphs.
 * `QuadraticAssignmentProblems.jl`: Loads a QAP in QAPLib format and then reduces and solves a strong doubly nonnegative relaxation of it.
+
+## Citing
+
+See [`CITATION.bib`](CITATION.bib) for the relevant reference(s).

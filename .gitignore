@@ -1,3 +1,5 @@
+*.jl.*.cov
+*.jl.cov
+*.jl.mem
 /Manifest.toml
-/examples/QAPLib
-/examples/SolveAllQAP.jl
+/docs/build/
