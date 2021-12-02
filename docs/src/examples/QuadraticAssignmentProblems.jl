@@ -5,7 +5,7 @@ using SparseArrays
 using LinearAlgebra
 using DelimitedFiles
 
-using JuMP
+using JuMP, MathOptInterface
 using Hypatia
 
 
