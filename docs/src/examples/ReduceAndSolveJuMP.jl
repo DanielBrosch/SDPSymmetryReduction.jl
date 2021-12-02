@@ -1,12 +1,10 @@
 # A slightly more advanced example how to reduce and solve a given SDP in standard form. Example application in QuadraticAssignmentProblems.jl
 
-using Combinatorics
 using LinearAlgebra
 using SDPSymmetryReduction
 using JuMP
-using MosekTools
+using Hypatia
 using SparseArrays
-using MathOptInterface
 
 function reduceAndSolve(C, A, b, objSense = MathOptInterface.MAX_SENSE, verbose = false, complex = false, limitSize = 3000)
     tmd = @timed admPartSubspace(C, A, b, verbose)
@@ -19,7 +17,7 @@ function reduceAndSolve(C, A, b, objSense = MathOptInterface.MAX_SENSE, verbose 
         blkD = tmd.value
         blkDTime = tmd.time
 
-        if blkD == nothing
+        if blkD === nothing
             # Either random/rounding error, or complex numbers needed
             return nothing
         end
@@ -27,9 +25,9 @@ function reduceAndSolve(C, A, b, objSense = MathOptInterface.MAX_SENSE, verbose 
         # solve with solver of choice
         m = nothing
         if verbose
-            m = Model(Mosek.Optimizer)
+            m = Model(Hypatia.Optimizer)
         else
-            m = Model(optimizer_with_attributes(Mosek.Optimizer, "MSK_IPAR_LOG" => 0))
+            m = Model(optimizer_with_attributes(Hypatia.Optimizer, "MSK_IPAR_LOG" => 0))
         end
 
         # >= 0 because the SDP-matrices should be entry-wise nonnegative

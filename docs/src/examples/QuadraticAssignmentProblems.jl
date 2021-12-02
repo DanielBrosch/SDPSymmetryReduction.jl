@@ -6,7 +6,7 @@ using LinearAlgebra
 using DelimitedFiles
 
 using JuMP
-using MosekTools
+using Hypatia
 
 
 # Symmetry reduces the given QAP, returns optimal admissible partition subspace
