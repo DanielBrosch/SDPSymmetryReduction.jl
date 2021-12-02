@@ -94,6 +94,6 @@ end
 ## Solving an a relaxation of an example QAP from QAPLib
 
 include("ReduceAndSolveJuMP.jl")
-qap = loadQAP("examples\\esc16j.dat")
+qap = loadQAP(joinpath(@__DIR__, "esc16j.dat"))
 prg = generateSDP(qap.A, qap.B)
 @show reduceAndSolve(prg.C, prg.A, prg.b, MathOptInterface.MIN_SENSE, true)

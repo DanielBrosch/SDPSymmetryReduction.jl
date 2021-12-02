@@ -5,7 +5,7 @@ using Test
 
 DocMeta.setdocmeta!(SDPSymmetryReduction, :DocTestSetup, :(using SDPSymmetryReduction); recursive=true)
 
-# Use Literate.jl to generate examples (functions modified from https://github.com/jump-dev/JuMP.jl/blob/master/docs/make.jl)
+## Use Literate.jl to generate examples (functions modified from https://github.com/jump-dev/JuMP.jl/blob/master/docs/make.jl)
 
 function _file_list(full_dir, relative_dir, extension)
     return map(
@@ -42,12 +42,9 @@ function _literate_directory(dir)
     return nothing
 end
 
+_literate_directory.(joinpath(@__DIR__, "src", "examples"))
 
-for (root, dir, files) in walkdir(joinpath(@__DIR__, "src", "examples"))
-    _literate_directory.(joinpath.(root, dir))
-end
-
-# Generate docs
+## Generate docs
 
 makedocs(;
     modules=[SDPSymmetryReduction],
