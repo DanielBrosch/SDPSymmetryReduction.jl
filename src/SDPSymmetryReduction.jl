@@ -72,24 +72,23 @@ function projectAndRound(M, A, round = true)
 end
 
 """
-    admPartSubspace(C, A, b, verbose = false)
+    admPartSubspace(C::Vector{T}, A::Matrix{T}, b::Vector{T}, verbose::Bool = false)
 
-Compute smallest admissible partion subspace for the SDP inf/sup{C'*x, A*x = b, Mat(x) PSD/DNN}.
+Compute the smallest admissible partion subspace for the SDP
+``\\inf/\\sup\\{\\dot(C,x), Ax = b, \\mathrm\\{Mat\\}(x) \\text{PSD/DNN}\\}.``
 """
-function admPartSubspace(C, A, b, verbose = false)
+function admPartSubspace(C::Vector{T}, A::Matrix{T}, b::Vector{T}, verbose::Bool = false) where T<:AbstractFloat
 
-    n = Int(sqrt(Float64(size(C, 1))))
-
-    A = Float64.(A)
+    n = Int(sqrt(Float64(length(C))))
 
     verbose && print("\nStarting the reduction. Original dimension: $(Int64((n^2+n)/2))\n",)
 
     C = roundMat(C)
-    CL = C - orthProject(A', Vector(C))
+    CL = C - orthProject(A', C)
     CL = reshape(roundMat(CL), n, n)
     CL = Matrix(Symmetric(0.5 * (CL + CL')))
 
-    X0 = sparse(qr(sparse(A)) \ Vector(b))
+    X0 = sparse(qr(sparse(A)) \ b)
 
     X0Sym = vec(0.5 * (reshape(X0, n, n) + reshape(X0, n, n)'))
     X0Lp = orthProject(A', X0Sym)
