@@ -44,6 +44,19 @@ version = "0.21.2"
 deps = ["Base64", "NetworkOptions", "Printf", "SHA"]
 uuid = "76f85450-5226-5b5a-8eaa-529ad045b433"
 
+[[Libdl]]
+uuid = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
+
+[[LinearAlgebra]]
+deps = ["Libdl"]
+uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+
+[[Literate]]
+deps = ["Base64", "IOCapture", "JSON", "REPL"]
+git-tree-sha1 = "d3493acfb9e6aa0cff46b09773fc2342327b0feb"
+uuid = "98b081ad-f1c9-55d3-8b20-4c87d4299306"
+version = "2.9.4"
+
 [[Logging]]
 uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
 
@@ -76,9 +89,10 @@ deps = ["Serialization"]
 uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [[SDPSymmetryReduction]]
-path = ".."
-uuid = "43d14e84-a57c-48fc-b6b9-470bc56161c0"
-version = "0.1.0"
+deps = ["LinearAlgebra", "SparseArrays"]
+git-tree-sha1 = "274018adc896566e49aa46f6be34aaa02280b2b1"
+uuid = "56ed78d6-6c87-4b01-a4f7-e143c302c7a0"
+version = "0.1.1"
 
 [[SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
@@ -88,6 +102,10 @@ uuid = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
 
 [[Sockets]]
 uuid = "6462fe0b-24de-5631-8697-dd941f90decc"
+
+[[SparseArrays]]
+deps = ["LinearAlgebra", "Random"]
+uuid = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [[Test]]
 deps = ["InteractiveUtils", "Logging", "Random", "Serialization"]
