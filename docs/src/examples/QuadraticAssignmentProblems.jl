@@ -1,5 +1,5 @@
 ## Load a QAP and determine an admissible subspace of its SDP relaxation
-using SDPSymmetryReduction
+using Main.SDPSymmetryReduction
 
 using SparseArrays
 using LinearAlgebra
@@ -9,14 +9,14 @@ using JuMP, MathOptInterface
 using Hypatia
 
 
-# Symmetry reduces the given QAP, returns optimal admissible partition subspace
+## Symmetry reduces the given QAP, returns optimal admissible partition subspace
 function reduceQAP(A, B, C = zeros(size(A)))
     prg = generateSDP(A, B, C)
     P = admPartSubspace(prg...)
     return P
 end
 
-# Load a QAP from a file (QAPLib format)
+## Load a QAP from a file (QAPLib format)
 function loadQAP(file)
     data = open(file) do file
         read(file, String)
@@ -44,11 +44,11 @@ function loadQAP(file)
     return (A = A, B = B)
 end
 
-#Formulating the QAP DNN relaxation with vectorised matrices in conic form
+## Formulating the QAP DNN relaxation with vectorised matrices in conic form
 function generateSDP(A, B, C = zeros(size(A)))
     n = size(A, 1)
 
-    #Objective
+    ## Objective
     CPrg = sparse(kron(B, A) + Diagonal(vec(C)))
 
     In = sparse(I, n, n)
@@ -59,7 +59,7 @@ function generateSDP(A, B, C = zeros(size(A)))
 
 
 
-    #Vectorised condition matrices as rows of large matrix APrg
+    ## Vectorised condition matrices as rows of large matrix APrg
     APrg = spzeros(2n + 1, n^4)
     b = zeros(2n + 1)
     currentRow = 1
@@ -71,7 +71,7 @@ function generateSDP(A, B, C = zeros(size(A)))
         APrg[currentRow, :] = vec(kron(In, Ejj))
         b[currentRow] = 1
         currentRow += 1
-        # Last condition is linearly dependent on others
+        ## Last condition is linearly dependent on others
         if (j < n)
             APrg[currentRow, :] = vec(kron(Ejj, In))
             b[currentRow] = 1

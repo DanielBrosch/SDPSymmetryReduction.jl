@@ -56,7 +56,7 @@ end
 
 # Project v orthogonally to the span of columns of A
 function orthProject(A, v)
-    return A * ((A' * A) \ (A' * v))
+    return A * ((A' * A) \ Vector(A' * v))
 end
 
 # Projects M and rounds the matrix afterwards
@@ -77,7 +77,7 @@ end
 Compute the smallest admissible partion subspace for the SDP
 ``\\inf/\\sup\\{\\dot(C,x), Ax = b, \\mathrm\\{Mat\\}(x) \\text{PSD/DNN}\\}.``
 """
-function admPartSubspace(C::Vector{T}, A::Matrix{T}, b::Vector{T}, verbose::Bool = false) where T<:AbstractFloat
+function admPartSubspace(C::AbstractVector{T}, A::AbstractMatrix{T}, b::AbstractVector{T}, verbose::Bool = false) where T<:AbstractFloat
 
     n = Int(sqrt(Float64(length(C))))
 

@@ -1,7 +1,7 @@
-# A slightly more advanced example how to reduce and solve a given SDP in standard form. Example application in QuadraticAssignmentProblems.jl
+## A slightly more advanced example how to reduce and solve a given SDP in standard form. Example application in QuadraticAssignmentProblems.jl
 
 using LinearAlgebra
-using SDPSymmetryReduction
+using Main.SDPSymmetryReduction
 using JuMP
 using Hypatia
 using SparseArrays
@@ -18,11 +18,11 @@ function reduceAndSolve(C, A, b, objSense = MathOptInterface.MAX_SENSE, verbose 
         blkDTime = tmd.time
 
         if blkD === nothing
-            # Either random/rounding error, or complex numbers needed
+            ## Either random/rounding error, or complex numbers needed
             return nothing
         end
 
-        # solve with solver of choice
+        ## solve with solver of choice
         m = nothing
         if verbose
             m = Model(Hypatia.Optimizer)
@@ -30,12 +30,12 @@ function reduceAndSolve(C, A, b, objSense = MathOptInterface.MAX_SENSE, verbose 
             m = Model(optimizer_with_attributes(Hypatia.Optimizer, "MSK_IPAR_LOG" => 0))
         end
 
-        # >= 0 because the SDP-matrices should be entry-wise nonnegative
+        ## >= 0 because the SDP-matrices should be entry-wise nonnegative
         x = @variable(m, x[1:P.n] >= 0)
 
         PMat = hcat([sparse(vec(P.P .== i)) for i = 1:P.n]...)
 
-        # Reduce the number of constraints
+        ## Reduce the number of constraints
         newConstraints = Float64.(hcat(A * PMat, b))
         newConstraints = sparse(svd(Matrix(newConstraints)').U[:, 1:rank(newConstraints)]')
         droptol!(newConstraints, 1e-8)

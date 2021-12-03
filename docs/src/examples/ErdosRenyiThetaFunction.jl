@@ -6,24 +6,31 @@
 # graph $\mathrm{ER}(q)$. Two vertices are adjacent if they are distinct and 
 # orthogonal, i.e. for two representing vectors $x$ and $y$ we have $x^Ty=0$. We 
 # are interested in the size of a maximum stable set of these graphs, 
-# specifically upper bounds for this value.
+# specifically upper bounds for this value. Note that these are not the equally named
+# random graphs.
 
-using LinearAlgebra
-q = 11
+using LinearAlgebra #hide
+q = 7
 PG2q = vcat([[0, 0, 1]],
             [[0, 1, b] for b = 0:q-1],
             [[1, a, b] for a = 0:q-1 for b = 0:q-1])
-Adj = [x' * y % q == 0 for x in PG2q, y in PG2q]
-Adj[diagind(Adj)] .= 0
-Adj
+Adj = [x' * y % q == 0 && x != y for x in PG2q, y in PG2q]
+size(Adj)
+
+# 
+using Plots #hide
+spy(Adj)
+
 
 # ## The Theta'-function
 # The Theta'-function $\vartheta(G)$ of a graph $G=(V,E)$ is such an upper bound, based on
 # semidefinite programming:
-# $$\vartheta(G)\coloneqq \sup\{\langle X,J\rangle : \langle X,A\rangle = 0, X\succcurlyeq 0, X\geq 0\}.$$
+#
+# ``\vartheta(G)\coloneqq \sup\{\langle X,J\rangle : \langle X,A\rangle = 0, X\succcurlyeq 0, X\geq 0\}.``
+#
 # In vectorized standard form this is simply
 
-N = length(PG2q) # = q^2+q+1
+N = length(PG2q)
 C = ones(N^2)
 A = vcat(vec(Adj)', vec(Matrix{Float64}(I, N, N))')
 b = [0.0, 1.0];
@@ -33,15 +40,21 @@ b = [0.0, 1.0];
 # We can now apply the Jordan reduction method to the problem.
 # First, we need to determine an (optimal) admissible subspace.
 
-using SDPSymmetryReduction, Plots
+using SDPSymmetryReduction
 P = admPartSubspace(C, A, b, true)
-heatmap(P.P)
+P.n
+
+# Running `admPartSubspace` returns a `Partition` object. `P.n` are the number of orbits (and thus
+# variables), and `P.P` is a matrix with integer values from `1` trough `P.n`. Here, `P.P` looks like this
+# (different color shades = different orbits): 
+
+heatmap(reverse(P.P, dims=1)) #hide
 
 # Now we can block-diagonalize the algebra (numerically)
 blkD = blockDiagonalize(P, true);
 
 # ## Building the reduced SDP
-# Since 'blkD.blks[i]' is the block-diagonalized image of P.P .== i,
+# Since `blkD.blks[i]` is the block-diagonalized image of `P.P .== i`,
 # we obtain the new, symmetry reduced SDP by
 using SparseArrays
 PMat = hcat([sparse(vec(P.P .== i)) for i = 1:P.n]...)
@@ -71,6 +84,7 @@ for blk in psdBlocks
 end
 
 optimize!(m)
-
-@show termination_status(m)
+#
+termination_status(m)
+#
 objective_value(m)
