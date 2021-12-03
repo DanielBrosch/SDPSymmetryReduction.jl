@@ -1,12 +1,18 @@
-## A slightly more advanced example how to reduce and solve a given SDP in standard form. Example application in QuadraticAssignmentProblems.jl
+# # General example
+# This function takes an SDP in standard form, reduces it, formulates it as (hermitian) SDP, and solves it with JuMP
 
 using LinearAlgebra
-using Main.SDPSymmetryReduction
+using SDPSymmetryReduction
 using JuMP
-using Hypatia
+using CSDP
 using SparseArrays
 
-function reduceAndSolve(C, A, b, objSense = MathOptInterface.MAX_SENSE, verbose = false, complex = false, limitSize = 3000)
+function reduceAndSolve(C, A, b; 
+    objSense = MathOptInterface.MAX_SENSE, 
+    verbose = false, 
+    complex = false, 
+    limitSize = 3000)
+    
     tmd = @timed admPartSubspace(C, A, b, verbose)
     P = tmd.value
     jordanTime = tmd.time
@@ -25,9 +31,9 @@ function reduceAndSolve(C, A, b, objSense = MathOptInterface.MAX_SENSE, verbose 
         ## solve with solver of choice
         m = nothing
         if verbose
-            m = Model(Hypatia.Optimizer)
+            m = Model(CSDP.Optimizer)
         else
-            m = Model(optimizer_with_attributes(Hypatia.Optimizer, "MSK_IPAR_LOG" => 0))
+            m = Model(optimizer_with_attributes(CSDP.Optimizer, "MSK_IPAR_LOG" => 0))
         end
 
         ## >= 0 because the SDP-matrices should be entry-wise nonnegative

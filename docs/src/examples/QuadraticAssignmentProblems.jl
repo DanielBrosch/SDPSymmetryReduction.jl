@@ -1,99 +1,141 @@
-## Load a QAP and determine an admissible subspace of its SDP relaxation
-using Main.SDPSymmetryReduction
+# # Symmetry reducting a strong relaxation of the quadratic assigment problem
+# Here, we are going to show how to load a QAP from QABLib, formulate 
+# a strong semidefinite relaxation of it, symmetry reduce it, and finally solve it.
 
-using SparseArrays
-using LinearAlgebra
-using DelimitedFiles
+# ## Quadratic assigment problems
+# QAPs are given by two quadratic matrices $A$ and $B$. The objective is to permute 
+# the rows and columns of $B$, such that the inner product between the matrices is 
+# minimized.
+#
+# ``\mathrm{QAP}(A,B) = \min_{\phi\in S_n} \sum_{i,j=1}^n a_{ij}b_{\phi(i)\phi(j)}``
+#
+# QAPs are notoriously hard to solve exactly, but there exist strong polynomial time
+# relaxations, such as the following semidefinite programming relaxation:
+#
+# ```math
+# \begin{aligned}
+# \min\enspace & \langle B\otimes A ,Y\rangle\\
+# \mathrm{s.t.}\enspace & \langle I_n\otimes E_{jj},Y\rangle=1 \text{ for }j\in [n],\\
+# & \langle E_{jj}\otimes I_n,Y\rangle=1 \text{ for }j\in [n],\\
+# & \langle I_n\otimes (J_n-I_n)+(J_n-I_n)\otimes I_n,Y\rangle =0, \\
+# & \langle J_{n^2},Y\rangle = n^2,\\
+# & Y\in D^{n^2},
+# \end{aligned}
+# ```
+#
+# But in practice this relaxation is often too big to be solved directly.
 
-using JuMP, MathOptInterface
-using Hypatia
 
+# ## Loading the data of a QAP
+using SparseArrays, LinearAlgebra
 
-## Symmetry reduces the given QAP, returns optimal admissible partition subspace
-function reduceQAP(A, B, C = zeros(size(A)))
-    prg = generateSDP(A, B, C)
-    P = admPartSubspace(prg...)
-    return P
+file = joinpath(@__DIR__, "esc16j.dat")
+data = open(file) do file
+    read(file, String)
 end
+data = split(data, [' ', '\n', '\r'], keepempty = false)
 
-## Load a QAP from a file (QAPLib format)
-function loadQAP(file)
-    data = open(file) do file
-        read(file, String)
+n = parse(Int64, data[1])
+A = zeros(Int64, n, n)
+B = zeros(Int64, n, n)
+
+pos = 2
+for x = 1:n
+    for y = 1:n
+        A[x, y] = parse(Int64, data[pos])
+        global pos += 1
     end
-    data = split(data, [' ', '\n', '\r'], keepempty = false)
-
-    n = parse(Int64, data[1])
-    A = zeros(Int64, n, n)
-    B = zeros(Int64, n, n)
-
-    pos = 2
-    for x = 1:n
-        for y = 1:n
-            A[x, y] = parse(Int64, data[pos])
-            pos = pos + 1
-        end
-    end
-    for x = 1:n
-        for y = 1:n
-            B[x, y] = parse(Int64, data[pos])
-            pos = pos + 1
-        end
-    end
-
-    return (A = A, B = B)
 end
-
-## Formulating the QAP DNN relaxation with vectorised matrices in conic form
-function generateSDP(A, B, C = zeros(size(A)))
-    n = size(A, 1)
-
-    ## Objective
-    CPrg = sparse(kron(B, A) + Diagonal(vec(C)))
-
-    In = sparse(I, n, n)
-    Jn = ones(n, n)
-
-    tmp = kron(In, Jn - In) + kron(Jn - In, In)
-
-
-
-
-    ## Vectorised condition matrices as rows of large matrix APrg
-    APrg = spzeros(2n + 1, n^4)
-    b = zeros(2n + 1)
-    currentRow = 1
-
-
-    for j = 1:n
-        Ejj = spzeros(n, n)
-        Ejj[j, j] = 1.0
-        APrg[currentRow, :] = vec(kron(In, Ejj))
-        b[currentRow] = 1
-        currentRow += 1
-        ## Last condition is linearly dependent on others
-        if (j < n)
-            APrg[currentRow, :] = vec(kron(Ejj, In))
-            b[currentRow] = 1
-            currentRow += 1
-        end
+for x = 1:n
+    for y = 1:n
+        B[x, y] = parse(Int64, data[pos])
+        global pos += 1
     end
-
-    APrg[currentRow, :] = vec(kron(In, Jn - In) + kron(Jn - In, In))
-    b[currentRow] = 0
-    currentRow += 1
-    APrg[currentRow, :] = vec(ones(n^2, n^2))
-    b[currentRow] = n^2
-
-    CPrg = sparse(vec(0.5 * (CPrg + CPrg')))
-
-    return (C = CPrg, A = APrg, b = b)
 end
 
 
-## Solving an a relaxation of an example QAP from QAPLib
+# ## Building the SDP (in vectorized standard form)
+n = size(A, 1)
 
-include("ReduceAndSolveJuMP.jl")
-qap = loadQAP(joinpath(@__DIR__, "esc16j.dat"))
-prg = generateSDP(qap.A, qap.B)
-@show reduceAndSolve(prg.C, prg.A, prg.b, MathOptInterface.MIN_SENSE, true)
+## Objective
+CPrg = sparse(kron(B, A))
+
+In = sparse(I, n, n)
+Jn = ones(n, n)
+
+## Vectorised constraint matrices as rows of large matrix APrg
+APrg = spzeros(2n + 1, n^4)
+bPrg = zeros(2n + 1)
+currentRow = 1
+
+for j = 1:n
+    Ejj = spzeros(n, n)
+    Ejj[j, j] = 1.0
+    APrg[currentRow, :] = vec(kron(In, Ejj))
+    bPrg[currentRow] = 1
+    global currentRow += 1
+    ## Last constraint is linearly dependent on others
+    if (j < n)
+        APrg[currentRow, :] = vec(kron(Ejj, In))
+        bPrg[currentRow] = 1
+        global currentRow += 1
+    end
+end
+
+APrg[currentRow, :] = vec(kron(In, Jn - In) + kron(Jn - In, In))
+bPrg[currentRow] = 0
+currentRow += 1
+APrg[currentRow, :] = vec(ones(n^2, n^2))
+bPrg[currentRow] = n^2
+
+CPrg = sparse(vec(0.5 * (CPrg + CPrg')));
+
+# ## Symmetry reducing the SDP 
+
+# We first determine an optimal admissible partition subspace
+using SDPSymmetryReduction
+P = admPartSubspace(CPrg, APrg, bPrg, true)
+P.n
+# And then we block-diagonalize it 
+blkD = blockDiagonalize(P, true);
+
+# ## Determining the coefficients of the reduced SDP 
+PMat = hcat([sparse(vec(P.P .== i)) for i = 1:P.n]...)
+newA = APrg * PMat
+newB = bPrg
+newC = CPrg' * PMat;
+
+## Removing linearly dependent constraints #src
+# using RowEchelon  #src
+# T = rref!(Matrix(hcat(newA,newB))) #src
+# r = rank(T) #src
+# newA = T[1:r,1:end-1] #src
+# newB = T[1:r,end] #src
+# length(newB) #src
+
+# ## Solving the reduced SDP with JuMP and CSDP
+
+using JuMP, CSDP
+m = Model(CSDP.Optimizer)
+
+## Initialize variables corresponding parts of the partition P
+## >= 0 because the original SDP-matrices are entry-wise nonnegative
+x = @variable(m, x[1:P.n] >= 0)
+
+@constraint(m, newA * x .== newB)
+@objective(m, Max, newC * x)
+
+psdBlocks = sum(blkD.blks[i] .* x[i] for i = 1:P.n)
+for blk in psdBlocks
+    if size(blk, 1) > 1
+        @constraint(m, blk in PSDCone())
+    else
+        @constraint(m, blk .>= 0)
+    end
+end
+
+optimize!(m)
+#
+termination_status(m)
+#
+objective_value(m)

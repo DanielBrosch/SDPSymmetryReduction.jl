@@ -26,7 +26,9 @@ spy(Adj)
 # The Theta'-function $\vartheta(G)$ of a graph $G=(V,E)$ is such an upper bound, based on
 # semidefinite programming:
 #
-# ``\vartheta(G)\coloneqq \sup\{\langle X,J\rangle : \langle X,A\rangle = 0, X\succcurlyeq 0, X\geq 0\}.``
+# ```math
+# \vartheta(G)\coloneqq \sup\{\langle X,J\rangle : \langle X,A\rangle = 0, X\succcurlyeq 0, X\geq 0\}.
+# ```
 #
 # In vectorized standard form this is simply
 
@@ -62,10 +64,10 @@ newA = A * PMat
 newB = b
 newC = C' * PMat;
 
-# ## Solving the SDP with JuMP and Hypatia
+# ## Solving the SDP with JuMP and CSDP
 
-using JuMP, Hypatia
-m = Model(Hypatia.Optimizer)
+using JuMP, CSDP
+m = Model(CSDP.Optimizer)
 
 ## Initialize variables corresponding parts of the partition P
 ## >= 0 because the original SDP-matrices are entry-wise nonnegative
