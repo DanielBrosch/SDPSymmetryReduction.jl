@@ -3,6 +3,9 @@ using Documenter
 using Literate
 using Test
 
+ENV["PLOTS_TEST"] = "true"
+ENV["GKSwstype"] = "100"
+
 DocMeta.setdocmeta!(SDPSymmetryReduction, :DocTestSetup, :(using SDPSymmetryReduction); recursive=true)
 
 ## Use Literate.jl to generate examples (functions modified from https://github.com/jump-dev/JuMP.jl/blob/master/docs/make.jl)
