@@ -209,7 +209,7 @@ Determines a block-diagonalization of a (Jordan)-algebra given by a partition `P
 ## Output
 
 * `blkd.blkSizes` is an integer array of the sizes of the blocks.
-* `blkd.blks` is an array of length `P.n` containing arrays of (real) matrices of sizes `blkd.blkSizes`. I.e. `blkd.blks[i]` is the image of the basis element `P.P .== i`.
+* `blkd.blks` is an array of length `P.n` containing arrays of (real/complex) matrices of sizes `blkd.blkSizes`. I.e. `blkd.blks[i]` is the image of the basis element `P.P .== i`.
     
 """
 function blockDiagonalize(P::Partition, verbose = true; epsilon = 1e-8, complex = false)
