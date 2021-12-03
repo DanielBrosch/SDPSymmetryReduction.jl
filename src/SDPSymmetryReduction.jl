@@ -7,12 +7,21 @@ export Partition, admPartSubspace, blockDiagonalize
 
 # Stores a partition of [m]×[m] in a single matrix
 # Entries of P should always be 1,…,n
+"""
+    Partition
+
+A partition subspace. `P.n` is the number of parts, and `P.P` an integer matrix defining the basis elements.
+"""
 struct Partition
     n::Int64 # Number of parts
     P::Matrix{Int64} # Matrix with entries 1,...,n
 end
 
-# Round numbers near zero to zero
+"""
+    roundToZero(f::Number)
+
+Round numbers near zero to zero.
+"""
 function roundToZero(f::Number)
     if abs(f) < 1e-8
         return 0.0
@@ -20,8 +29,13 @@ function roundToZero(f::Number)
     return f
 end
 
-# Create a partition from the unique entries of M
-function part(M)
+
+"""
+    part(M::Matrix{T}) where T
+
+Create a partition from the unique entries of `M`.
+"""
+function part(M::Matrix{T}) where T
     u = unique(M)
     filter!(e -> e ≠ 0, u)
     d = Dict([(u[i], i) for i in eachindex(u)])
@@ -30,20 +44,25 @@ function part(M)
     return Partition(size(u, 1), [d[i] for i in M])
 end
 
-# Find the coarsest partition refining P1 and P2
+
+"""
+    coarsestPart(P1::Partition, P2::Partition)
+
+Find the coarsest partition refining `P1` and `P2`.
+"""
 function coarsestPart(P1::Partition, P2::Partition)
     return part(P1.P * (P2.n + 1) + P2.P)
 end
 
-# Returns a random linear combination in the partition space
-function rndPart(P::Partition, orthog = false)
+
+"""
+    rndPart(P::Partition)
+
+Returns a random linear combination in the partition space `P`.
+"""
+function rndPart(P::Partition)
     r = [rand() for i = 1:P.n+1]
     r[1] = 0
-    if orthog
-        for i = 1:P.n
-            r[i+1] /= count(x -> x == i, P.P)
-        end
-    end
     return [r[i+1] for i in P.P]
 end
 
@@ -71,11 +90,18 @@ function projectAndRound(M, A, round = true)
     return Float64.(tmp)
 end
 
+
 """
     admPartSubspace(C::Vector{T}, A::Matrix{T}, b::Vector{T}, verbose::Bool = false)
 
-Compute the smallest admissible partion subspace for the SDP
-``\\inf/\\sup\\{\\dot(C,x), Ax = b, \\mathrm\\{Mat\\}(x) \\text{PSD/DNN}\\}.``
+Returns the optimal admissible partition subspace for the SDP
+
+``\\inf\\{C^Tx, Ax = b, \\mathrm{Mat}(x) \\succcurlyeq 0\\}.``
+
+This is done using a randomized Jordan-reduction algorithm, and it returns a Jordan algebra (closed under linear combinations and squaring). SDPs can be restricted to such a subspace without changing their optimal value.
+
+## Output
+A `Partition` subspace `P`.    
 """
 function admPartSubspace(C::AbstractVector{T}, A::AbstractMatrix{T}, b::AbstractVector{T}, verbose::Bool = false) where T<:AbstractFloat
 
@@ -137,7 +163,12 @@ function admPartSubspace(C::AbstractVector{T}, A::AbstractMatrix{T}, b::Abstract
     return P
 end
 
-# WL algorithm to "un-symmetrize" the Jordan algebra
+
+"""
+    unSymmetrize(P::Partition)
+
+WL algorithm to "un-symmetrize" the Jordan algebra corresponding to `P`.
+"""
 function unSymmetrize(P::Partition)
     P = deepcopy(P)
     dim = P.n
@@ -171,7 +202,15 @@ end
 """
     blockDiagonalize(P::Partition, verbose = true; epsilon = 1e-8, complex = false)
 
-Compute the block-diagonalization of the (Jordan)-algebra given by the Partition P. May fail if complex = false, since a real block diagonalization does not always exist.
+Determines a block-diagonalization of a (Jordan)-algebra given by a partition `P` using a randomized algorithm. `blockDiagonalize(P)` returns a real block-diagonalization `blkd`, if it exists, otherwise `nothing`.
+
+`blockDiagonalize(P; complex = true)` returns the same, but with complex valued matrices, and should be used if no real block-diagonalization was found. To use the complex matrices practically, remember that a Hermitian matrix `A` is positive semidefinite iff `[real(A) -imag(A); imag(A) real(A)]` is positive semidefinite.
+
+## Output
+
+* `blkd.blkSizes` is an integer array of the sizes of the blocks.
+* `blkd.blks` is an array of length `P.n` containing arrays of (real) matrices of sizes `blkd.blkSizes`. I.e. `blkd.blks[i]` is the image of the basis element `P.P .== i`.
+    
 """
 function blockDiagonalize(P::Partition, verbose = true; epsilon = 1e-8, complex = false)
     P2 = P

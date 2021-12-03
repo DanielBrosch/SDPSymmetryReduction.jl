@@ -21,19 +21,12 @@ Simply run
 pkg> add SDPSymmetryReduction  # Press ']' to enter the Pkg REPL mode.
 ```
 
-## Determining an admissible subspace
+## Main use
 The function `admPartSubspace` determines an optimal admissible partition subspace for the problem. This is done using a randomized Jordan-reduction algorithm, and it returns a Jordan algebra (closed under linear combinations and squaring). SDPs can be restricted to such a subspace without changing their optimal value.
 
-Given `C,A` and `b`, `admPartSubspace(C,a,b)` returns a `Partition P` with `P.n` giving the number of parts of the partition, and `P.P` returning an integer valued matrix (same size at `x` in matrix form) with entries `1,...,n` defining the partition.
-
-## Block-diagonalizing a Jordan-algebra
 The function `blockDiagonalize` determines a block-diagonalization of a (Jordan)-algebra given by a partition `P` using a randomized algorithm.
 
-`blockDiagonalize(P)` returns a real block-diagonalization `blkd`, if it exists, otherwise `nothing`.
-* `blkd.blkSizes` returns an integer array of the sizes of the blocks.
-* `blkd.blks` returns an array of length `P.n` containing arrays of (real) matrices of sizes `blkd.blkSizes`. I.e. `blkd.blks[i]` is the image of the basis element `P.P .== i`.
-
-`blockDiagonalize(P; complex = true)` returns the same, but with complex valued matrices, and should be used if no real block-diagonalization was found. To use the complex matrices practically, remember that a Hermitian matrix `A` is positive semidefinite iff `[real(A) -imag(A); imag(A) real(A)]` is positive semidefinite.
+For more details, see the [documentation](https://DanielBrosch.github.io/SDPSymmetryReduction.jl/stable).
 
 ## Example: Theta'-function
 Let `Adj` be an adjacency matrix of an (undirected) graph `G`. Then the Theta'-function of the graph is given by
@@ -92,10 +85,7 @@ optimize!(m)
 @show termination_status(m)
 @show value(newC * x)
 ```
-There are more examples in the folder `examples`:
-* `ReduceAndSolveJuMP.jl`: A more advanced function for fully reducing and solving SDPs with JuMP and Mosek, including support for complex block-diagonalizations.
-* `ErdosRenyiThetaFunction.jl`: A full example calculating the Theta'-function of Erdos-Renyi graphs.
-* `QuadraticAssignmentProblems.jl`: Loads a QAP in QAPLib format and then reduces and solves a strong doubly nonnegative relaxation of it.
+There are more examples in the [documentation](https://DanielBrosch.github.io/SDPSymmetryReduction.jl/stable).
 
 ## Citing
 

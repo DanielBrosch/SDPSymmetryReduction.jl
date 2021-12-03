@@ -47,7 +47,7 @@ end
 
 _literate_directory.(joinpath(@__DIR__, "src", "examples"))
 
-# Generate docs
+## Generate docs
 
 makedocs(;
     modules=[SDPSymmetryReduction],
