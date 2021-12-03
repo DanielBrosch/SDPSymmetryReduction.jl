@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Symmetry reducting a strong relaxation of the quadratic assigment problem · SDPSymmetryReduction.jl</title><script data-outdated-warner src="../../assets/warner.js"></script><link rel="canonical" href="https://DanielBrosch.com/SDPSymmetryReduction.jl/examples/QuadraticAssignmentProblems/"/><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.039/juliamono-regular.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.11/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">SDPSymmetryReduction.jl</a></span></div><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../ErdosRenyiThetaFunction/">The Theta&#39;-function of Erdos-Renyi graphs</a></li><li class="is-active"><a class="tocitem" href>Symmetry reducting a strong relaxation of the quadratic assigment problem</a><ul class="internal"><li><a class="tocitem" href="#Quadratic-assigment-problems"><span>Quadratic assigment problems</span></a></li><li><a class="tocitem" href="#Loading-the-data-of-a-QAP"><span>Loading the data of a QAP</span></a></li><li><a class="tocitem" href="#Building-the-SDP-(in-vectorized-standard-form)"><span>Building the SDP (in vectorized standard form)</span></a></li><li><a class="tocitem" href="#Symmetry-reducing-the-SDP"><span>Symmetry reducing the SDP</span></a></li><li><a class="tocitem" href="#Determining-the-coefficients-of-the-reduced-SDP"><span>Determining the coefficients of the reduced SDP</span></a></li><li><a class="tocitem" href="#Solving-the-reduced-SDP-with-JuMP-and-CSDP"><span>Solving the reduced SDP with JuMP and CSDP</span></a></li></ul></li><li><a class="tocitem" href="../ReduceAndSolveJuMP/">General example</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>Symmetry reducting a strong relaxation of the quadratic assigment problem</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Symmetry reducting a strong relaxation of the quadratic assigment problem</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/DanielBrosch/SDPSymmetryReduction.jl/blob/master/docs/src/examples/QuadraticAssignmentProblems.jl" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Symmetry-reducting-a-strong-relaxation-of-the-quadratic-assigment-problem"><a class="docs-heading-anchor" href="#Symmetry-reducting-a-strong-relaxation-of-the-quadratic-assigment-problem">Symmetry reducting a strong relaxation of the quadratic assigment problem</a><a id="Symmetry-reducting-a-strong-relaxation-of-the-quadratic-assigment-problem-1"></a><a class="docs-heading-anchor-permalink" href="#Symmetry-reducting-a-strong-relaxation-of-the-quadratic-assigment-problem" title="Permalink"></a></h1><p>Here, we are going to show how to load a QAP from QABLib, formulate a strong semidefinite relaxation of it, symmetry reduce it, and finally solve it.</p><h2 id="Quadratic-assigment-problems"><a class="docs-heading-anchor" href="#Quadratic-assigment-problems">Quadratic assigment problems</a><a id="Quadratic-assigment-problems-1"></a><a class="docs-heading-anchor-permalink" href="#Quadratic-assigment-problems" title="Permalink"></a></h2><p>QAPs are given by two quadratic matrices <span>$A$</span> and <span>$B$</span>. The objective is to permute the rows and columns of <span>$B$</span>, such that the inner product between the matrices is minimized.</p><p><span>$\mathrm{QAP}(A,B) = \min_{\phi\in S_n} \sum_{i,j=1}^n a_{ij}b_{\phi(i)\phi(j)}$</span></p><p>QAPs are notoriously hard to solve exactly, but there exist strong polynomial time relaxations, such as the following semidefinite programming relaxation:</p><p class="math-container">\[\begin{aligned}
+\min\enspace &amp; \langle B\otimes A ,Y\rangle\\
+\mathrm{s.t.}\enspace &amp; \langle I_n\otimes E_{jj},Y\rangle=1 \text{ for }j\in [n],\\
+&amp; \langle E_{jj}\otimes I_n,Y\rangle=1 \text{ for }j\in [n],\\
+&amp; \langle I_n\otimes (J_n-I_n)+(J_n-I_n)\otimes I_n,Y\rangle =0, \\
+&amp; \langle J_{n^2},Y\rangle = n^2,\\
+&amp; Y\in D^{n^2},
+\end{aligned}\]</p><p>But in practice this relaxation is often too big to be solved directly.</p><h2 id="Loading-the-data-of-a-QAP"><a class="docs-heading-anchor" href="#Loading-the-data-of-a-QAP">Loading the data of a QAP</a><a id="Loading-the-data-of-a-QAP-1"></a><a class="docs-heading-anchor-permalink" href="#Loading-the-data-of-a-QAP" title="Permalink"></a></h2><pre><code class="language-julia hljs">using SparseArrays, LinearAlgebra
+
+file = joinpath(@__DIR__, &quot;esc16j.dat&quot;)
+data = open(file) do file
+    read(file, String)
+end
+data = split(data, [&#39; &#39;, &#39;\n&#39;, &#39;\r&#39;], keepempty = false)
+
+n = parse(Int64, data[1])
+A = zeros(Int64, n, n)
+B = zeros(Int64, n, n)
+
+pos = 2
+for x = 1:n
+    for y = 1:n
+        A[x, y] = parse(Int64, data[pos])
+        global pos += 1
+    end
+end
+for x = 1:n
+    for y = 1:n
+        B[x, y] = parse(Int64, data[pos])
+        global pos += 1
+    end
+end</code></pre><h2 id="Building-the-SDP-(in-vectorized-standard-form)"><a class="docs-heading-anchor" href="#Building-the-SDP-(in-vectorized-standard-form)">Building the SDP (in vectorized standard form)</a><a id="Building-the-SDP-(in-vectorized-standard-form)-1"></a><a class="docs-heading-anchor-permalink" href="#Building-the-SDP-(in-vectorized-standard-form)" title="Permalink"></a></h2><pre><code class="language-julia hljs">n = size(A, 1)
+
+# Objective
+CPrg = sparse(kron(B, A))
+
+In = sparse(I, n, n)
+Jn = ones(n, n)
+
+# Vectorised constraint matrices as rows of large matrix APrg
+APrg = spzeros(2n + 1, n^4)
+bPrg = zeros(2n + 1)
+currentRow = 1
+
+for j = 1:n
+    Ejj = spzeros(n, n)
+    Ejj[j, j] = 1.0
+    APrg[currentRow, :] = vec(kron(In, Ejj))
+    bPrg[currentRow] = 1
+    global currentRow += 1
+    # Last constraint is linearly dependent on others
+    if (j &lt; n)
+        APrg[currentRow, :] = vec(kron(Ejj, In))
+        bPrg[currentRow] = 1
+        global currentRow += 1
+    end
+end
+
+APrg[currentRow, :] = vec(kron(In, Jn - In) + kron(Jn - In, In))
+bPrg[currentRow] = 0
+currentRow += 1
+APrg[currentRow, :] = vec(ones(n^2, n^2))
+bPrg[currentRow] = n^2
+
+CPrg = sparse(vec(0.5 * (CPrg + CPrg&#39;)));</code></pre><h2 id="Symmetry-reducing-the-SDP"><a class="docs-heading-anchor" href="#Symmetry-reducing-the-SDP">Symmetry reducing the SDP</a><a id="Symmetry-reducing-the-SDP-1"></a><a class="docs-heading-anchor-permalink" href="#Symmetry-reducing-the-SDP" title="Permalink"></a></h2><p>We first determine an optimal admissible partition subspace</p><pre><code class="language-julia hljs">using SDPSymmetryReduction
+P = admPartSubspace(CPrg, APrg, bPrg, true)
+P.n</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">150</code></pre><p>And then we block-diagonalize it</p><pre><code class="language-julia hljs">blkD = blockDiagonalize(P, true);</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Determining block sizes...
+Block sizes are [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7, 7, 7, 7, 7]
+Determining the algebra-isomorphism...
+Calculating image of the basis of the algebra...</code></pre><h2 id="Determining-the-coefficients-of-the-reduced-SDP"><a class="docs-heading-anchor" href="#Determining-the-coefficients-of-the-reduced-SDP">Determining the coefficients of the reduced SDP</a><a id="Determining-the-coefficients-of-the-reduced-SDP-1"></a><a class="docs-heading-anchor-permalink" href="#Determining-the-coefficients-of-the-reduced-SDP" title="Permalink"></a></h2><pre><code class="language-julia hljs">PMat = hcat([sparse(vec(P.P .== i)) for i = 1:P.n]...)
+newA = APrg * PMat
+newB = bPrg
+newC = CPrg&#39; * PMat;</code></pre><h2 id="Solving-the-reduced-SDP-with-JuMP-and-CSDP"><a class="docs-heading-anchor" href="#Solving-the-reduced-SDP-with-JuMP-and-CSDP">Solving the reduced SDP with JuMP and CSDP</a><a id="Solving-the-reduced-SDP-with-JuMP-and-CSDP-1"></a><a class="docs-heading-anchor-permalink" href="#Solving-the-reduced-SDP-with-JuMP-and-CSDP" title="Permalink"></a></h2><pre><code class="language-julia hljs">using JuMP, CSDP
+m = Model(CSDP.Optimizer)
+
+# Initialize variables corresponding parts of the partition P
+# &gt;= 0 because the original SDP-matrices are entry-wise nonnegative
+x = @variable(m, x[1:P.n] &gt;= 0)
+
+@constraint(m, newA * x .== newB)
+@objective(m, Max, newC * x)
+
+psdBlocks = sum(blkD.blks[i] .* x[i] for i = 1:P.n)
+for blk in psdBlocks
+    if size(blk, 1) &gt; 1
+        @constraint(m, blk in PSDCone())
+    else
+        @constraint(m, blk .&gt;= 0)
+    end
+end
+
+optimize!(m)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">┌ Warning: The addition operator has been used on JuMP expressions a large number of times. This warning is safe to ignore but may indicate that model generation is slower than necessary. For performance reasons, you should not add expressions in a loop. Instead of x += y, use add_to_expression!(x,y) to modify x in place. If y is a single variable, you may also use add_to_expression!(x, coef, y) for x += coef*y.
+└ @ JuMP ~/.julia/packages/JuMP/klrjG/src/JuMP.jl:1352
+Iter: 15 Ap: 9.55e-01 Pobj:  1.5743403e+01 Ad: 9.56e-01 Dobj:  1.5743403e+01
+Success: SDP solved
+Primal objective value: 1.5743403e+01
+Dual objective value: 1.5743403e+01
+Relative primal infeasibility: 7.92e-11
+Relative dual infeasibility: 1.98e-09
+Real Relative Gap: -4.31e-09
+XZ Relative Gap: 3.58e-09
+DIMACS error measures: 7.92e-11 0.00e+00 2.55e-08 0.00e+00 -4.31e-09 3.58e-09
+CSDP 6.2.0
+Iter:  0 Ap: 0.00e+00 Pobj:  7.0720000e+04 Ad: 0.00e+00 Dobj:  0.0000000e+00
+Iter:  1 Ap: 4.45e-01 Pobj:  1.0963286e+05 Ad: 5.85e-01 Dobj:  2.8034902e+02
+Iter:  2 Ap: 2.39e-01 Pobj:  1.7921119e+05 Ad: 3.52e-01 Dobj:  5.2785688e+02
+Iter:  3 Ap: 4.54e-01 Pobj:  8.6535612e+04 Ad: 1.00e+00 Dobj:  1.0767062e+03
+Iter:  4 Ap: 8.71e-01 Pobj:  1.0477498e+04 Ad: 1.00e+00 Dobj:  1.1562149e+03
+Iter:  5 Ap: 8.84e-01 Pobj:  1.3345593e+03 Ad: 1.00e+00 Dobj:  1.1346365e+03
+Iter:  6 Ap: 8.88e-01 Pobj:  2.9649320e+02 Ad: 1.00e+00 Dobj:  9.2327358e+02
+Iter:  7 Ap: 5.32e-01 Pobj:  1.7079605e+02 Ad: 9.66e-01 Dobj:  4.4274602e+02
+Iter:  8 Ap: 5.30e-01 Pobj:  9.2971699e+01 Ad: 5.90e-01 Dobj:  3.0066874e+02
+Iter:  9 Ap: 7.89e-01 Pobj:  4.9169067e+01 Ad: 1.00e+00 Dobj:  2.5934531e+02
+Iter: 10 Ap: 6.13e-01 Pobj:  4.3008541e+01 Ad: 7.58e-01 Dobj:  1.6717488e+02
+Iter: 11 Ap: 7.28e-01 Pobj:  4.2379087e+01 Ad: 1.00e+00 Dobj:  8.8861924e+01
+Iter: 12 Ap: 7.79e-01 Pobj:  4.5181454e+01 Ad: 1.00e+00 Dobj:  6.1424509e+01
+Iter: 13 Ap: 7.32e-01 Pobj:  4.6552863e+01 Ad: 1.00e+00 Dobj:  5.5096614e+01
+Iter: 14 Ap: 7.51e-01 Pobj:  4.7658726e+01 Ad: 1.00e+00 Dobj:  5.0140465e+01
+Iter: 15 Ap: 8.36e-01 Pobj:  4.7997849e+01 Ad: 8.47e-01 Dobj:  4.9282904e+01
+Iter: 16 Ap: 7.80e-01 Pobj:  4.8202600e+01 Ad: 1.00e+00 Dobj:  4.8526618e+01
+Iter: 17 Ap: 7.97e-01 Pobj:  4.8276022e+01 Ad: 1.00e+00 Dobj:  4.8361244e+01
+Iter: 18 Ap: 6.05e-01 Pobj:  4.8289865e+01 Ad: 6.79e-01 Dobj:  4.8337205e+01
+Iter: 19 Ap: 7.51e-01 Pobj:  4.8299923e+01 Ad: 1.00e+00 Dobj:  4.8311673e+01
+Iter: 20 Ap: 5.38e-01 Pobj:  4.8302109e+01 Ad: 6.68e-01 Dobj:  4.8307304e+01
+Iter: 21 Ap: 4.88e-01 Pobj:  4.8303282e+01 Ad: 8.59e-01 Dobj:  4.8304145e+01
+Iter: 22 Ap: 9.33e-01 Pobj:  4.8304535e+01 Ad: 1.00e+00 Dobj:  4.8303421e+01
+Iter: 23 Ap: 9.37e-01 Pobj:  4.8304691e+01 Ad: 1.00e+00 Dobj:  4.8303434e+01
+Iter: 24 Ap: 1.00e+00 Pobj:  4.8304708e+01 Ad: 1.00e+00 Dobj:  4.8303554e+01</code></pre><pre><code class="language-julia hljs">termination_status(m)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">OPTIMAL::TerminationStatusCode = 1</code></pre><pre><code class="language-julia hljs">objective_value(m)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">48.30470963358517</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../ErdosRenyiThetaFunction/">« The Theta&#39;-function of Erdos-Renyi graphs</a><a class="docs-footer-nextpage" href="../ReduceAndSolveJuMP/">General example »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.10 on <span class="colophon-date" title="Friday 3 December 2021 15:56">Friday 3 December 2021</span>. Using Julia version 1.7.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

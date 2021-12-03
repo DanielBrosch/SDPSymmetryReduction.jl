@@ -1,14 +1,18 @@
-# A slightly more advanced example how to reduce and solve a given SDP in standard form. Example application in QuadraticAssignmentProblems.jl
+# # General example
+# This function takes an SDP in standard form, reduces it, formulates it as (hermitian) SDP, and solves it with JuMP
 
-using Combinatorics
 using LinearAlgebra
 using SDPSymmetryReduction
 using JuMP
-using MosekTools
+using CSDP
 using SparseArrays
-using MathOptInterface
 
-function reduceAndSolve(C, A, b, objSense = MathOptInterface.MAX_SENSE, verbose = false, complex = false, limitSize = 3000)
+function reduceAndSolve(C, A, b; 
+    objSense = MathOptInterface.MAX_SENSE, 
+    verbose = false, 
+    complex = false, 
+    limitSize = 3000)
+    
     tmd = @timed admPartSubspace(C, A, b, verbose)
     P = tmd.value
     jordanTime = tmd.time
@@ -19,25 +23,25 @@ function reduceAndSolve(C, A, b, objSense = MathOptInterface.MAX_SENSE, verbose 
         blkD = tmd.value
         blkDTime = tmd.time
 
-        if blkD == nothing
-            # Either random/rounding error, or complex numbers needed
+        if blkD === nothing
+            ## Either random/rounding error, or complex numbers needed
             return nothing
         end
 
-        # solve with solver of choice
+        ## solve with solver of choice
         m = nothing
         if verbose
-            m = Model(Mosek.Optimizer)
+            m = Model(CSDP.Optimizer)
         else
-            m = Model(optimizer_with_attributes(Mosek.Optimizer, "MSK_IPAR_LOG" => 0))
+            m = Model(optimizer_with_attributes(CSDP.Optimizer, "MSK_IPAR_LOG" => 0))
         end
 
-        # >= 0 because the SDP-matrices should be entry-wise nonnegative
+        ## >= 0 because the SDP-matrices should be entry-wise nonnegative
         x = @variable(m, x[1:P.n] >= 0)
 
         PMat = hcat([sparse(vec(P.P .== i)) for i = 1:P.n]...)
 
-        # Reduce the number of constraints
+        ## Reduce the number of constraints
         newConstraints = Float64.(hcat(A * PMat, b))
         newConstraints = sparse(svd(Matrix(newConstraints)').U[:, 1:rank(newConstraints)]')
         droptol!(newConstraints, 1e-8)
