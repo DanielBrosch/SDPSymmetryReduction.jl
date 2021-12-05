@@ -9,6 +9,7 @@
 # specifically upper bounds for this value. Note that these are not the equally named
 # random graphs.
 
+using Test #src 
 using LinearAlgebra #hide
 q = 7
 PG2q = vcat([[0, 0, 1]],
@@ -46,6 +47,8 @@ using SDPSymmetryReduction
 P = admPartSubspace(C, A, b, true)
 P.n
 
+@test P.n == 18 #src
+
 # Running `admPartSubspace` returns a `Partition` object. `P.n` are the number of orbits (and thus
 # variables), and `P.P` is a matrix with integer values from `1` trough `P.n`. Here, `P.P` looks like this
 # (different color shades = different orbits): 
@@ -54,6 +57,7 @@ heatmap(reverse(P.P, dims=1)) #hide
 
 # Now we can block-diagonalize the algebra (numerically)
 blkD = blockDiagonalize(P, true);
+@test blkD.blkSizes == [3,2,2,2,2] #src
 
 # ## Building the reduced SDP
 # Since `blkD.blks[i]` is the block-diagonalized image of `P.P .== i`,
@@ -90,3 +94,5 @@ optimize!(m)
 termination_status(m)
 #
 objective_value(m)
+
+@test objective_value(m) ≈ 15.743402681126568 atol = 5 #src
