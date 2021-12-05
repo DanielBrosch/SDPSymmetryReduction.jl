@@ -28,6 +28,7 @@
 
 # ## Loading the data of a QAP
 using SparseArrays, LinearAlgebra
+using Test #src
 
 file = joinpath(@__DIR__, "esc16j.dat")
 data = open(file) do file
@@ -96,8 +97,11 @@ CPrg = sparse(vec(0.5 * (CPrg + CPrg')));
 using SDPSymmetryReduction
 P = admPartSubspace(CPrg, APrg, bPrg, true)
 P.n
+
+@test P.n == 150 #src
 # And then we block-diagonalize it 
 blkD = blockDiagonalize(P, true);
+@test blkD.blkSizes == [7, 7, 7, 7, 7, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] #src
 
 # ## Determining the coefficients of the reduced SDP 
 PMat = hcat([sparse(vec(P.P .== i)) for i = 1:P.n]...)
@@ -139,3 +143,5 @@ optimize!(m)
 termination_status(m)
 #
 objective_value(m)
+
+@test objective_value(m) ≈ 48.3042 atol = 5#src
