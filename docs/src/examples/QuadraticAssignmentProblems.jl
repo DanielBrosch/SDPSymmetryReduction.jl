@@ -101,7 +101,7 @@ P.n
 @test P.n == 150 #src
 # And then we block-diagonalize it 
 blkD = blockDiagonalize(P, true);
-@test blkD.blkSizes == [7, 7, 7, 7, 7, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] #src
+@test sort(blkD.blkSizes) == sort([7, 7, 7, 7, 7, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]) #src
 
 # ## Determining the coefficients of the reduced SDP 
 PMat = hcat([sparse(vec(P.P .== i)) for i = 1:P.n]...)
