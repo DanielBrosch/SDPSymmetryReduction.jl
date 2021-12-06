@@ -57,7 +57,7 @@ heatmap(reverse(P.P, dims=1)) #hide
 
 # Now we can block-diagonalize the algebra (numerically)
 blkD = blockDiagonalize(P, true);
-@test blkD.blkSizes == [3,2,2,2,2] #src
+@test sort(blkD.blkSizes) == [2,2,2,2,3] #src
 
 # ## Building the reduced SDP
 # Since `blkD.blks[i]` is the block-diagonalized image of `P.P .== i`,
