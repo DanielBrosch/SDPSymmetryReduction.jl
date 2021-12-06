@@ -9,12 +9,11 @@
 # specifically upper bounds for this value. Note that these are not the equally named
 # random graphs.
 
-using Test #src 
 using LinearAlgebra #hide
 q = 7
 PG2q = vcat([[0, 0, 1]],
-            [[0, 1, b] for b = 0:q-1],
-            [[1, a, b] for a = 0:q-1 for b = 0:q-1])
+[[0, 1, b] for b = 0:q-1],
+[[1, a, b] for a = 0:q-1 for b = 0:q-1])
 Adj = [x' * y % q == 0 && x != y for x in PG2q, y in PG2q]
 size(Adj)
 
@@ -47,6 +46,7 @@ using SDPSymmetryReduction
 P = admPartSubspace(C, A, b, true)
 P.n
 
+using Test #src 
 @test P.n == 18 #src
 
 # Running `admPartSubspace` returns a `Partition` object. `P.n` are the number of orbits (and thus

@@ -66,20 +66,32 @@ function rndPart(P::Partition)
     return [r[i+1] for i in P.P]
 end
 
-# Rounds the matrix, sets entries near 0.0 to 0.0
+"""
+    roundMat(M)
+
+Rounds the matrix, sets entries near 0.0 to 0.0.
+"""
 function roundMat(M)
     tmp = round.(M, sigdigits = 5)
     tmp = roundToZero.(tmp)
     return tmp
 end
 
-# Project v orthogonally to the span of columns of A
-function orthProject(A, v)
+"""
+    orthProject(A::AbstractMatrix{T}, v::AbstractVector{T}) where T
+
+Project v orthogonally to the span of columns of A
+"""
+function orthProject(A::AbstractMatrix{T}, v::AbstractVector{T}) where T
     return A * ((A' * A) \ Vector(A' * v))
 end
 
-# Projects M and rounds the matrix afterwards
-function projectAndRound(M, A, round = true)
+"""
+    projectAndRound(M::AbstractMatrix{T}, A::AbstractMatrix{T}; round = true) where T
+
+Projects M to the nullspace of A and rounds the matrix afterwards.
+""" 
+function projectAndRound(M::AbstractMatrix{T}, A::AbstractMatrix{T}; round = true) where T
     n = Int64(sqrt(length(M)))
     tmp = vec(Matrix(M))
     tmp = tmp - orthProject(A, tmp)
