@@ -66,12 +66,14 @@ bPrg[currentRow] = n^2
 CPrg = sparse(vec(0.5 * (CPrg + CPrg&#39;)));</code></pre><h2 id="Symmetry-reducing-the-SDP"><a class="docs-heading-anchor" href="#Symmetry-reducing-the-SDP">Symmetry reducing the SDP</a><a id="Symmetry-reducing-the-SDP-1"></a><a class="docs-heading-anchor-permalink" href="#Symmetry-reducing-the-SDP" title="Permalink"></a></h2><p>We first determine an optimal admissible partition subspace</p><pre><code class="language-julia hljs">using SDPSymmetryReduction
 P = admPartSubspace(CPrg, APrg, bPrg, true)
 P.n</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">150</code></pre><p>And then we block-diagonalize it</p><pre><code class="language-julia hljs">blkD = blockDiagonalize(P, true);</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Determining block sizes...
-Block sizes are [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7, 7, 7, 7, 7]
-Determining the algebra-isomorphism...
-Calculating image of the basis of the algebra...</code></pre><h2 id="Determining-the-coefficients-of-the-reduced-SDP"><a class="docs-heading-anchor" href="#Determining-the-coefficients-of-the-reduced-SDP">Determining the coefficients of the reduced SDP</a><a id="Determining-the-coefficients-of-the-reduced-SDP-1"></a><a class="docs-heading-anchor-permalink" href="#Determining-the-coefficients-of-the-reduced-SDP" title="Permalink"></a></h2><pre><code class="language-julia hljs">PMat = hcat([sparse(vec(P.P .== i)) for i = 1:P.n]...)
+Block sizes are [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 7, 7, 7, 7]
+┌ Error: Dimensions do not match up. Rounding error (try different epsilons and/or try again) or not block-diagonalizable over the reals (try parameter complex = true).
+└ @ SDPSymmetryReduction ~/work/SDPSymmetryReduction.jl/SDPSymmetryReduction.jl/src/SDPSymmetryReduction.jl:274
+sum([(count(K .== Ki) * (count(K .== Ki) + 1)) / 2 for Ki = unique(K)]) = 145.0
+P.n = 150</code></pre><h2 id="Determining-the-coefficients-of-the-reduced-SDP"><a class="docs-heading-anchor" href="#Determining-the-coefficients-of-the-reduced-SDP">Determining the coefficients of the reduced SDP</a><a id="Determining-the-coefficients-of-the-reduced-SDP-1"></a><a class="docs-heading-anchor-permalink" href="#Determining-the-coefficients-of-the-reduced-SDP" title="Permalink"></a></h2><pre><code class="language-julia hljs">PMat = hcat([sparse(vec(P.P .== i)) for i = 1:P.n]...)
 newA = APrg * PMat
 newB = bPrg
-newC = CPrg&#39; * PMat;</code></pre><h2 id="Solving-the-reduced-SDP-with-JuMP-and-CSDP"><a class="docs-heading-anchor" href="#Solving-the-reduced-SDP-with-JuMP-and-CSDP">Solving the reduced SDP with JuMP and CSDP</a><a id="Solving-the-reduced-SDP-with-JuMP-and-CSDP-1"></a><a class="docs-heading-anchor-permalink" href="#Solving-the-reduced-SDP-with-JuMP-and-CSDP" title="Permalink"></a></h2><pre><code class="language-julia hljs">using JuMP, CSDP
+newC = CPrg&#39; * PMat;</code></pre><h2 id="Solving-the-reduced-SDP-with-JuMP-and-CSDP"><a class="docs-heading-anchor" href="#Solving-the-reduced-SDP-with-JuMP-and-CSDP">Solving the reduced SDP with JuMP and CSDP</a><a id="Solving-the-reduced-SDP-with-JuMP-and-CSDP-1"></a><a class="docs-heading-anchor-permalink" href="#Solving-the-reduced-SDP-with-JuMP-and-CSDP" title="Permalink"></a></h2><pre><code class="language- hljs">using JuMP, CSDP
 m = Model(CSDP.Optimizer)
 
 # Initialize variables corresponding parts of the partition P
@@ -90,40 +92,4 @@ for blk in psdBlocks
     end
 end
 
-optimize!(m)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">┌ Warning: The addition operator has been used on JuMP expressions a large number of times. This warning is safe to ignore but may indicate that model generation is slower than necessary. For performance reasons, you should not add expressions in a loop. Instead of x += y, use add_to_expression!(x,y) to modify x in place. If y is a single variable, you may also use add_to_expression!(x, coef, y) for x += coef*y.
-└ @ JuMP ~/.julia/packages/JuMP/klrjG/src/JuMP.jl:1352
-Iter: 15 Ap: 9.55e-01 Pobj:  1.5743403e+01 Ad: 9.56e-01 Dobj:  1.5743403e+01
-Success: SDP solved
-Primal objective value: 1.5743403e+01
-Dual objective value: 1.5743403e+01
-Relative primal infeasibility: 7.14e-11
-Relative dual infeasibility: 1.85e-09
-Real Relative Gap: -4.58e-09
-XZ Relative Gap: 2.80e-09
-DIMACS error measures: 7.14e-11 0.00e+00 2.39e-08 0.00e+00 -4.58e-09 2.80e-09
-CSDP 6.2.0
-Iter:  0 Ap: 0.00e+00 Pobj:  7.0720000e+04 Ad: 0.00e+00 Dobj:  0.0000000e+00
-Iter:  1 Ap: 4.45e-01 Pobj:  1.0963689e+05 Ad: 5.85e-01 Dobj:  2.8027810e+02
-Iter:  2 Ap: 2.39e-01 Pobj:  1.7907879e+05 Ad: 3.53e-01 Dobj:  5.2808625e+02
-Iter:  3 Ap: 4.55e-01 Pobj:  8.6422071e+04 Ad: 1.00e+00 Dobj:  1.0766363e+03
-Iter:  4 Ap: 8.71e-01 Pobj:  1.0465187e+04 Ad: 1.00e+00 Dobj:  1.1563477e+03
-Iter:  5 Ap: 8.81e-01 Pobj:  1.3605730e+03 Ad: 1.00e+00 Dobj:  1.1381863e+03
-Iter:  6 Ap: 8.70e-01 Pobj:  3.2006571e+02 Ad: 1.00e+00 Dobj:  9.4752150e+02
-Iter:  7 Ap: 5.97e-01 Pobj:  1.7544866e+02 Ad: 1.00e+00 Dobj:  5.0382907e+02
-Iter:  8 Ap: 4.76e-01 Pobj:  1.0629445e+02 Ad: 5.95e-01 Dobj:  3.1404699e+02
-Iter:  9 Ap: 6.96e-01 Pobj:  5.5293741e+01 Ad: 1.00e+00 Dobj:  2.7529932e+02
-Iter: 10 Ap: 7.21e-01 Pobj:  4.2927532e+01 Ad: 8.97e-01 Dobj:  1.8200089e+02
-Iter: 11 Ap: 6.36e-01 Pobj:  4.1900875e+01 Ad: 9.10e-01 Dobj:  1.0923773e+02
-Iter: 12 Ap: 7.90e-01 Pobj:  4.4430057e+01 Ad: 1.00e+00 Dobj:  6.4697051e+01
-Iter: 13 Ap: 7.81e-01 Pobj:  4.6157322e+01 Ad: 1.00e+00 Dobj:  5.6479296e+01
-Iter: 14 Ap: 8.09e-01 Pobj:  4.7584018e+01 Ad: 1.00e+00 Dobj:  5.0648988e+01
-Iter: 15 Ap: 7.14e-01 Pobj:  4.7893499e+01 Ad: 7.15e-01 Dobj:  4.9638298e+01
-Iter: 16 Ap: 7.83e-01 Pobj:  4.8164939e+01 Ad: 1.00e+00 Dobj:  4.8605133e+01
-Iter: 17 Ap: 7.45e-01 Pobj:  4.8257454e+01 Ad: 1.00e+00 Dobj:  4.8392027e+01
-Iter: 18 Ap: 6.54e-01 Pobj:  4.8283923e+01 Ad: 9.60e-01 Dobj:  4.8336651e+01
-Iter: 19 Ap: 5.65e-01 Pobj:  4.8293003e+01 Ad: 9.17e-01 Dobj:  4.8321927e+01
-Iter: 20 Ap: 6.35e-01 Pobj:  4.8298481e+01 Ad: 8.07e-01 Dobj:  4.8313550e+01
-Iter: 21 Ap: 9.41e-01 Pobj:  4.8303413e+01 Ad: 1.00e+00 Dobj:  4.8305351e+01
-Iter: 22 Ap: 8.03e-01 Pobj:  4.8303982e+01 Ad: 8.77e-01 Dobj:  4.8303278e+01
-Iter: 23 Ap: 9.80e-01 Pobj:  4.8304171e+01 Ad: 1.00e+00 Dobj:  4.8303252e+01
-Iter: 24 Ap: 1.00e+00 Pobj:  4.8304182e+01 Ad: 1.00e+00 Dobj:  4.8303286e+01</code></pre><pre><code class="language-julia hljs">termination_status(m)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">OPTIMAL::TerminationStatusCode = 1</code></pre><pre><code class="language-julia hljs">objective_value(m)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">48.304182471059676</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../ErdosRenyiThetaFunction/">« The Theta&#39;-function of Erdos-Renyi graphs</a><a class="docs-footer-nextpage" href="../ReduceAndSolveJuMP/">General example »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.10 on <span class="colophon-date" title="Monday 6 December 2021 13:49">Monday 6 December 2021</span>. Using Julia version 1.7.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+optimize!(m)</code></pre><pre><code class="language-julia hljs">termination_status(m)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">OPTIMIZE_NOT_CALLED::TerminationStatusCode = 0</code></pre><pre><code class="language- hljs">objective_value(m)</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../ErdosRenyiThetaFunction/">« The Theta&#39;-function of Erdos-Renyi graphs</a><a class="docs-footer-nextpage" href="../ReduceAndSolveJuMP/">General example »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.10 on <span class="colophon-date" title="Monday 6 December 2021 13:56">Monday 6 December 2021</span>. Using Julia version 1.7.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
