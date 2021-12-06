@@ -43,7 +43,18 @@ using Test
 
     @test SDPSymmetryReduction.unSymmetrize(P1).P == Partition(4, [1 3 3; 2 4 4; 2 4 4]).P
 
-    # complex block diagonalization test 
+    # complex block diagonalization tests
     P = Partition(4,[1 2 3 2; 2 1 2 3; 3 2 1 2; 2 3 2 1])
     @test blockDiagonalize(P; complex = true).blkSizes == [1,1,1]
+
+    function failsBlockDiagonalize()
+        try 
+            blockDiagonalize(P; complex = false).blkSizes == [1,1,1]
+        catch
+            return true
+        end
+        return false
+    end
+
+    @test failsBlockDiagonalize()
 end
