@@ -42,4 +42,8 @@ using Test
     @test sort(blockDiagonalize(admPartSubspace(C, A, b, true), true).blkSizes) == [2,2,2,2,3] 
 
     @test SDPSymmetryReduction.unSymmetrize(P1).P == Partition(4, [1 3 3; 2 4 4; 2 4 4]).P
+
+    # complex block diagonalization test 
+    P = Partition(4,[1 2 3 2; 2 1 2 3; 3 2 1 2; 2 3 2 1])
+    @test blockDiagonalize(P; complex = true).blkSizes == [1,1,1]
 end
