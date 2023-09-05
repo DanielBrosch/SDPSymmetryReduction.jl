@@ -104,7 +104,11 @@ blkD = blockDiagonalize(P, true);
 @test sort(blkD.blkSizes) == sort([7, 7, 7, 7, 7, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]) #src
 
 # ## Determining the coefficients of the reduced SDP 
-PMat = hcat([sparse(vec(P.P .== i)) for i = 1:P.n]...)
+PMat = spzeros(Bool, n^4, P.n)
+for c in eachindex(P.P)
+    PMat[c, P.P[c]] = 1
+end
+
 newA = APrg * PMat
 newB = bPrg
 newC = CPrg' * PMat;
@@ -119,7 +123,7 @@ newC = CPrg' * PMat;
 
 # ## Solving the reduced SDP with JuMP and CSDP
 
-using JuMP, CSDP
+using JuMP, CSDP, MutableArithmetics
 m = Model(CSDP.Optimizer)
 
 ## Initialize variables corresponding parts of the partition P
@@ -129,7 +133,8 @@ x = @variable(m, x[1:P.n] >= 0)
 @constraint(m, newA * x .== newB)
 @objective(m, Max, newC * x)
 
-psdBlocks = sum(blkD.blks[i] .* x[i] for i = 1:P.n)
+psdBlocks = @rewrite(sum(x[i] * blkD.blks[i] for i = 1:P.n));
+
 for blk in psdBlocks
     if size(blk, 1) > 1
         @constraint(m, blk in PSDCone())
