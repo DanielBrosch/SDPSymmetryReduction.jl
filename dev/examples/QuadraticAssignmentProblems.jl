@@ -131,7 +131,7 @@ m = Model(CSDP.Optimizer)
 x = @variable(m, x[1:P.n] >= 0)
 
 @constraint(m, newA * x .== newB)
-@objective(m, Max, newC * x)
+@objective(m, Min, newC * x)
 
 psdBlocks = @rewrite(sum(x[i] * blkD.blks[i] for i = 1:P.n));
 
@@ -149,4 +149,4 @@ termination_status(m)
 #
 objective_value(m)
 
-@test objective_value(m) ≈ 48.3042 atol = 5#src
+@test objective_value(m) ≈ 7.7942 atol = 5#src
