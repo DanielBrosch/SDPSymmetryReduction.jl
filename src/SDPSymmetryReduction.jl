@@ -233,7 +233,8 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = 1e-
     end
 
     r = Vector{T}(undef, P.n)
-    A = Matrix{T}(undef, size(P.P))
+    A = Matrix{T}(undef, size(P.P)) # used for getRandomMatrix
+    tmp = Matrix{T}(undef, size(P.P)) # used for V' * A * V
     # will fail if P.P contains 0 entries
     function getRandomMatrix()
         rand!(r)
@@ -250,17 +251,22 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = 1e-
     Q = F.vectors
 
     # split by eigenvalues
-    roundedEV = round.(F.values, digits = 10)
+    roundedEV = round.(F.values; digits = 10)
     uniqueEV = unique(roundedEV)
-    countEV = [sum(1 for rev in roundedEV if rev == u) for u in uniqueEV]
+    testEV = [[i for i in 1:length(roundedEV) if roundedEV[i] == u] for u in uniqueEV]
+    countEV = length.(testEV)
+    csEV = vcat([0], cumsum(countEV))
+    csEV .+= 1
 
-    QSplit = [Q[:, [i for i in 1:length(roundedEV) if roundedEV[i] == u]] for u in uniqueEV]
+    QSplit = [Q[:, [i for i = 1:length(roundedEV) if roundedEV[i] == u]] for u in uniqueEV]
 
     K = collect(1:length(uniqueEV))
-    tmp = getRandomMatrix()
-    for i in 1:length(uniqueEV), j in i:length(uniqueEV)
+    getRandomMatrix()
+    mul!(tmp, A, Q)
+    mul!(A, Q', tmp)
+    for i in 1:length(uniqueEV), j in i+1:length(uniqueEV)
         if K[i] != K[j] && countEV[i] == countEV[j]
-            if any(x -> x ≥ epsilon, abs.(QSplit[i]' * tmp * QSplit[j]))
+            if any(x -> abs(x) ≥ epsilon, A[csEV[i]:csEV[i+1]-1, csEV[j]:csEV[j+1]-1])
                 K[K.==K[j]] .= K[i]
             end
         end
