@@ -256,7 +256,7 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = 1e-
 
     QSplit = [Q[:, [i for i = 1:length(roundedEV) if roundedEV[i] == u]] for u in uniqueEV]
 
-    PSplit = [P.P .== i for i = 1:P.n]
+    @time PSplit = [P.P .== i for i = 1:P.n]
 
     K = collect(1:length(uniqueEV))
     tmp = getRandomMatrix()
@@ -290,6 +290,7 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = 1e-
 
     uniqueKs = unique(K)
     reducedQis = []
+    blockSizes = Int64[]
     for Ki in uniqueKs
         countKi = count(K .== Ki)
 
@@ -312,16 +313,25 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = 1e-
         end
 
         reducedQi = (QKi * QKi3 * Per')[:, 1:countKi]
-        println(size(reducedQi))
 
         push!(reducedQis, reducedQi)
+        push!(blockSizes, size(reducedQi, 2))
     end
 
     verbose && println("Calculating image of the basis of the algebra...")
 
-    blockDiagonalization = [[roundToZero!(B) for B in [Qi' * P * Qi for Qi in reducedQis]] for P in PSplit]
+    # blockDiagonalization = [[roundToZero!(B) for B in [Qi' * P * Qi for Qi in reducedQis]] for P in PSplit]
+    blockDiagonalization = [[Matrix{T}(undef, blockSizes[i], blockSizes[i]) for i in eachindex(blockSizes)] for _ in 1:P.n]
+    tmp = [Matrix{T}(undef, blockSizes[i], blockSizes[i]) for i in eachindex(blockSizes)]
+    for (x, y) in axes(P.P)
+        PP = P.P[x, y]
+        for (i, Qi) in enumerate(reducedQis)
+            mul!(tmp[i], Qi[x, :], Qi[y, :]') # might need to swap x and y for non symmetric matrices
+            blockDiagonalization[PP][i] .+= tmp[i]
+        end
+    end
+    broadcast.(roundToZero!, blockDiagonalization)
 
-    blockSizes = [size(b)[1] for b in blockDiagonalization[1]]
     return (blkSizes = blockSizes, blks = blockDiagonalization)
 end
 # move the type unstability to this function, also avoid breaking the old syntax
