@@ -23,11 +23,21 @@ end
 
 Round numbers near zero to zero.
 """
-function roundToZero(f::Number)
-    if abs(f) < 1e-8
-        return 0.0
+function roundToZero(f::T) where {T <: Real}
+    if abs(f) < Base.rtoldefault(T)
+        return zero(T)
     end
     return f
+end
+function roundToZero(f::Complex)
+    return roundToZero(real(f)) + im * roundToZero(imag(f))
+end
+
+function roundToZero!(M::Matrix)
+    @inbounds for i in eachindex(M)
+        M[i] = roundToZero(M[i])
+    end
+    return M
 end
 
 """
@@ -40,7 +50,6 @@ function part(M::Matrix{T}) where T
     filter!(e -> e ≠ 0, u)
     d = Dict([(u[i], i) for i in eachindex(u)])
     d[0] = 0
-
     return Partition(size(u, 1), [d[i] for i in M])
 end
 
@@ -59,8 +68,9 @@ end
 Returns a random linear combination in the partition space `P`.
 """
 function rndPart(P::Partition)
-    r = rand(P.n)
-    return r[P.P]
+    r = [rand() for i = 1:P.n+1]
+    r[1] = 0
+    return [r[i+1] for i in P.P]
 end
 
 """
@@ -224,6 +234,7 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = 1e-
 
     r = Vector{T}(undef, P.n)
     A = Matrix{T}(undef, size(P.P))
+    # will fail if P.P contains 0 entries
     function getRandomMatrix()
         rand!(r)
         @inbounds for i in eachindex(P.P)
@@ -284,62 +295,31 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = 1e-
 
         QKi = hcat([QSplit[i] for i = 1:length(uniqueEV) if K[i] == Ki]...)
         B1 = Symmetric(QKi' * getRandomMatrix() * QKi)
-        QKi3 = zeros(complex ? Complex{Float64} : Float64, size(B1))
+        QKi3 = zeros(T, size(B1))
 
         mult = countEV[Ki]
 
-        for j = 1:countKi
-            if j == 1
-
-                QKi3[
-                    (mult*(j-1)+1):(mult*(j-1)+mult),
-                    (mult*(j-1)+1):(mult*(j-1)+mult),
-                ] = Matrix(I, mult, mult)
-            else
-                QKi3[
-                    (mult*(j-1)+1):(mult*(j-1)+mult),
-                    (mult*(j-1)+1):(mult*(j-1)+mult),
-                ] =
-                    B1[
-                        1:mult,
-                        (mult*(j-1)+1):(mult*(j-1)+mult),
-                    ]^(-1)
-
-                QKi3[
-                    (mult*(j-1)+1):(mult*(j-1)+mult),
-                    (mult*(j-1)+1):(mult*(j-1)+mult),
-                ] ./= norm(QKi3[
-                    (mult*(j-1)+1),
-                    (mult*(j-1)+1):(mult*(j-1)+mult),
-                ])
-
-            end
+        QKi3[1:mult, 1:mult] = I(mult)
+        for j = 2:countKi
+            ind = mult*(j-1) .+ (1:mult)
+            QKi3[ind, ind] = B1[1:mult, ind]^(-1)
+            QKi3[ind, ind] ./= norm(QKi3[mult*(j-1)+1, ind])
         end
 
         Per = zeros(size(B1))
-        for i = 1:countKi
-            for j = 1:mult
-                Per[i+countKi*(j-1), j+mult*(i-1)] = 1
-            end
+        for i = 1:countKi, j = 1:mult
+            Per[i+countKi*(j-1), j+mult*(i-1)] = 1
         end
 
-        reducedQi = (QKi*QKi3*Per')[:, 1:countKi]
+        reducedQi = (QKi * QKi3 * Per')[:, 1:countKi]
+        println(size(reducedQi))
 
         push!(reducedQis, reducedQi)
-
     end
 
     verbose && println("Calculating image of the basis of the algebra...")
-    blockDiagonalization = [
-        [
-            (
-                complex ?
-                real(B) .* (abs.(real(B)) .>= epsilon) +
-                im * imag(B) .* (abs.(imag(B)) .>= epsilon) :
-                B .* (abs.(B) .>= epsilon)
-            ) for B in [Qi' * P * Qi for Qi in reducedQis]
-        ] for P in PSplit
-    ]
+
+    blockDiagonalization = [[roundToZero!(B) for B in [Qi' * P * Qi for Qi in reducedQis]] for P in PSplit]
 
     blockSizes = [size(b)[1] for b in blockDiagonalization[1]]
     return (blkSizes = blockSizes, blks = blockDiagonalization)
