@@ -8,6 +8,7 @@ export Partition, admPartSubspace, blockDiagonalize
 
 # Stores a partition of [m]×[m] in a single matrix
 # Entries of P should always be 1,…,n
+# Useful?
 """
     Partition
 
@@ -348,5 +349,14 @@ function blockDiagonalize(P::Partition, verbose = true; epsilon = 1e-8, complex 
         return blockDiagonalize(ComplexF64, P, verbose; epsilon)
     end
 end
+
+function reduce(p::Matrix, blks, P::Partition; check = false)
+    ind = [findfirst(x -> x == i, P.P) for i in 1:P.n] # add in Partition?
+    if check
+        @assert p[ind][P.P] ≈ p
+    end
+    return roundToZero!.(sum(p[ind[i]] * blks[i] for i in 1:P.n))
+end
+export reduce
 
 end
