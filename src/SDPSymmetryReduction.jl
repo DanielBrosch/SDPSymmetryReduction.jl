@@ -1,7 +1,8 @@
 module SDPSymmetryReduction
 
-using SparseArrays
 using LinearAlgebra
+using Random
+using SparseArrays
 
 export Partition, admPartSubspace, blockDiagonalize
 
@@ -58,9 +59,8 @@ end
 Returns a random linear combination in the partition space `P`.
 """
 function rndPart(P::Partition)
-    r = [rand() for i = 1:P.n+1]
-    r[1] = 0
-    return [r[i+1] for i in P.P]
+    r = rand(P.n)
+    return r[P.P]
 end
 
 """
@@ -216,25 +216,26 @@ Determines a block-diagonalization of a (Jordan)-algebra given by a partition `P
 * `blkd.blkSizes` is an integer array of the sizes of the blocks.
 * `blkd.blks` is an array of length `P.n` containing arrays of (real/complex) matrices of sizes `blkd.blkSizes`. I.e. `blkd.blks[i]` is the image of the basis element `P.P .== i`.
 """
-function blockDiagonalize(P::Partition, verbose = true; epsilon = 1e-8, complex = false)
-    P2 = P
+function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = 1e-8, complex = false) where {T <: Number}
+    complex = T <: Complex
     if complex
-        P2 = unSymmetrize(P)
+        P = unSymmetrize(P)
     end
 
+    r = Vector{T}(undef, P.n)
+    A = Matrix{T}(undef, size(P.P))
     function getRandomMatrix()
-        if !complex
-            return rndPart(P)
-        else
-            tmp = rndPart(P2) + im * rndPart(P2)
-            return tmp + tmp'
+        rand!(r)
+        @inbounds for i in eachindex(P.P)
+            A[i] = r[P.P[i]]
         end
+        # A .+= A' # not done in the real case in Daniel's code
+        return A
     end
 
     verbose && println("Determining block sizes...")
 
-    A = getRandomMatrix()
-    F = eigen(A)
+    F = eigen(getRandomMatrix())
     Q = F.vectors
 
     # split by eigenvalues
@@ -248,31 +249,28 @@ function blockDiagonalize(P::Partition, verbose = true; epsilon = 1e-8, complex 
 
     K = collect(1:length(uniqueEV))
     tmp = getRandomMatrix()
-    for i = 1:length(uniqueEV)
-        for j = i:length(uniqueEV)
-            if K[i] != K[j] && countEV[i] == countEV[j]
-                if any(x -> x >= epsilon, abs.(QSplit[i]' * tmp * QSplit[j]))
-                    K[K.==K[j]] .= K[i]
-                end
+    for i = 1:length(uniqueEV), j = i:length(uniqueEV)
+        if K[i] != K[j] && countEV[i] == countEV[j]
+            if any(x -> x >= epsilon, abs.(QSplit[i]' * tmp * QSplit[j]))
+                K[K.==K[j]] .= K[i]
             end
         end
     end
 
     verbose && println("Block sizes are $(sort!([count(K.==Ki) for Ki in unique(K)]))")
 
-    if !complex &&
-       sum([count(K .== Ki) * (count(K .== Ki) + 1) / 2 for Ki in unique(K)]) != P.n
+    if !complex && sum([count(K .== Ki) * (count(K .== Ki) + 1) / 2 for Ki in unique(K)]) != P.n
         if verbose
             @error("Dimensions do not match up. Rounding error (try different epsilons and/or try again) or not block-diagonalizable over the reals (try parameter complex = true).")
             @show sum([count(K .== Ki) * (count(K .== Ki) + 1) / 2 for Ki in unique(K)])
             @show P.n
         end
         return nothing
-    elseif complex && sum([count(K .== Ki)^2 for Ki in unique(K)]) != P2.n
+    elseif complex && sum([count(K .== Ki)^2 for Ki in unique(K)]) != P.n
         if verbose
             @error("Dimensions do not match up. Probably a rounding error (try different epsilons and/or try again).")
             @show sum([count(K .== Ki)^2 for Ki in unique(K)])
-            @show P2.n
+            @show P.n
         end
         return nothing
     end
@@ -345,6 +343,14 @@ function blockDiagonalize(P::Partition, verbose = true; epsilon = 1e-8, complex 
 
     blockSizes = [size(b)[1] for b in blockDiagonalization[1]]
     return (blkSizes = blockSizes, blks = blockDiagonalization)
+end
+# move the type unstability to this function, also avoid breaking the old syntax
+function blockDiagonalize(P::Partition, verbose = true; epsilon = 1e-8, complex = false)
+    if !complex
+        return blockDiagonalize(Float64, P, verbose; epsilon)
+    else
+        return blockDiagonalize(ComplexF64, P, verbose; epsilon)
+    end
 end
 
 end
