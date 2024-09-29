@@ -68,7 +68,7 @@ end
 Returns a random linear combination in the partition space `P`.
 """
 function rndPart(P::Partition)
-    r = [rand() for i = 1:P.n+1]
+    r = [rand() for i in 1:P.n+1]
     r[1] = 0
     return [r[i+1] for i in P.P]
 end
@@ -254,31 +254,33 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = 1e-
     uniqueEV = unique(roundedEV)
     countEV = [sum(1 for rev in roundedEV if rev == u) for u in uniqueEV]
 
-    QSplit = [Q[:, [i for i = 1:length(roundedEV) if roundedEV[i] == u]] for u in uniqueEV]
+    QSplit = [Q[:, [i for i in 1:length(roundedEV) if roundedEV[i] == u]] for u in uniqueEV]
 
     K = collect(1:length(uniqueEV))
     tmp = getRandomMatrix()
-    for i = 1:length(uniqueEV), j = i:length(uniqueEV)
+    for i in 1:length(uniqueEV), j in i:length(uniqueEV)
         if K[i] != K[j] && countEV[i] == countEV[j]
-            if any(x -> x >= epsilon, abs.(QSplit[i]' * tmp * QSplit[j]))
+            if any(x -> x ≥ epsilon, abs.(QSplit[i]' * tmp * QSplit[j]))
                 K[K.==K[j]] .= K[i]
             end
         end
     end
+    uniqueKs = unique(K)
+    countKis = [sum(1 for elK in K if elK == Ki) for Ki in uniqueKs]
 
-    verbose && println("Block sizes are $(sort!([count(K.==Ki) for Ki in unique(K)]))")
+    verbose && println("Block sizes are $(sort(countKis))")
 
-    if !complex && sum([count(K .== Ki) * (count(K .== Ki) + 1) / 2 for Ki in unique(K)]) != P.n
+    if !complex && sum(x -> (x * (x + 1)) ÷ 2, countKis) != P.n
         if verbose
             @error("Dimensions do not match up. Rounding error (try different epsilons and/or try again) or not block-diagonalizable over the reals (try parameter complex = true).")
-            @show sum([count(K .== Ki) * (count(K .== Ki) + 1) / 2 for Ki in unique(K)])
+            @show sum(x -> (x * (x + 1)) ÷ 2, countKis)
             @show P.n
         end
         return nothing
-    elseif complex && sum([count(K .== Ki)^2 for Ki in unique(K)]) != P.n
+    elseif complex && sum(x -> x ^ 2, countKis) != P.n
         if verbose
             @error("Dimensions do not match up. Probably a rounding error (try different epsilons and/or try again).")
-            @show sum([count(K .== Ki)^2 for Ki in unique(K)])
+            @show sum(x -> x ^ 2, countKis)
             @show P.n
         end
         return nothing
@@ -286,27 +288,25 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = 1e-
 
     verbose && println("Determining the algebra-isomorphism...")
 
-    uniqueKs = unique(K)
-    reducedQis = []
+    reducedQis = Matrix{T}[]
     blockSizes = Int64[]
-    for Ki in uniqueKs
-        countKi = count(K .== Ki)
+    for (Ki, countKi) in zip(uniqueKs, countKis)
 
-        QKi = hcat([QSplit[i] for i = 1:length(uniqueEV) if K[i] == Ki]...)
+        QKi = hcat([QSplit[i] for i in 1:length(uniqueEV) if K[i] == Ki]...)
         B1 = Symmetric(QKi' * getRandomMatrix() * QKi)
         QKi3 = zeros(T, size(B1))
 
         mult = countEV[Ki]
 
-        QKi3[1:mult, 1:mult] = I(mult)
-        for j = 2:countKi
+        QKi3[1:mult, 1:mult] .= I(mult)
+        for j in 2:countKi
             ind = mult*(j-1) .+ (1:mult)
-            QKi3[ind, ind] = B1[1:mult, ind]^(-1)
+            QKi3[ind, ind] .= inv(B1[1:mult, ind])
             QKi3[ind, ind] ./= norm(QKi3[mult*(j-1)+1, ind])
         end
 
-        Per = zeros(size(B1))
-        for i = 1:countKi, j = 1:mult
+        Per = zeros(T, size(B1))
+        for i in 1:countKi, j in 1:mult
             Per[i+countKi*(j-1), j+mult*(i-1)] = 1
         end
 
@@ -318,7 +318,7 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = 1e-
 
     verbose && println("Calculating image of the basis of the algebra...")
 
-    # PSplit = [P.P .== i for i = 1:P.n]
+    # PSplit = [P.P .== i for i in 1:P.n]
     # blockDiagonalization = [[roundToZero!(B) for B in [Qi' * P * Qi for Qi in reducedQis]] for P in PSplit]
     blockDiagonalization = [[Matrix{T}(undef, blockSizes[i], blockSizes[i]) for i in eachindex(blockSizes)] for _ in 1:P.n]
     tmp = [Matrix{T}(undef, blockSizes[i], blockSizes[i]) for i in eachindex(blockSizes)]
