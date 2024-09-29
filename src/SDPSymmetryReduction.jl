@@ -29,7 +29,6 @@ function roundToZero(f::Number)
     return f
 end
 
-
 """
     part(M::Matrix{T}) where T
 
@@ -44,7 +43,6 @@ function part(M::Matrix{T}) where T
     return Partition(size(u, 1), [d[i] for i in M])
 end
 
-
 """
     coarsestPart(P1::Partition, P2::Partition)
 
@@ -53,7 +51,6 @@ Find the coarsest partition refining `P1` and `P2`.
 function coarsestPart(P1::Partition, P2::Partition)
     return part(P1.P * (P2.n + 1) + P2.P)
 end
-
 
 """
     rndPart(P::Partition)
@@ -90,7 +87,7 @@ end
     projectAndRound(M::AbstractMatrix{T}, A::AbstractMatrix{T}; round = true) where T
 
 Projects M to the nullspace of A and rounds the matrix afterwards.
-""" 
+"""
 function projectAndRound(M::AbstractMatrix{T}, A::AbstractMatrix{T}; round = true) where T
     n = Int64(sqrt(length(M)))
     tmp = vec(Matrix(M))
@@ -102,7 +99,6 @@ function projectAndRound(M::AbstractMatrix{T}, A::AbstractMatrix{T}; round = tru
     return Float64.(tmp)
 end
 
-
 """
     admPartSubspace(C::Vector{T}, A::Matrix{T}, b::Vector{T}, verbose::Bool = false)
 
@@ -113,7 +109,7 @@ Returns the optimal admissible partition subspace for the SDP
 This is done using a randomized Jordan-reduction algorithm, and it returns a Jordan algebra (closed under linear combinations and squaring). SDPs can be restricted to such a subspace without changing their optimal value.
 
 ## Output
-A `Partition` subspace `P`.    
+A `Partition` subspace `P`.
 """
 function admPartSubspace(C::AbstractVector{T}, A::AbstractMatrix{T}, b::AbstractVector{T}, verbose::Bool = false) where T<:AbstractFloat
 
@@ -175,7 +171,6 @@ function admPartSubspace(C::AbstractVector{T}, A::AbstractMatrix{T}, b::Abstract
     return P
 end
 
-
 """
     unSymmetrize(P::Partition)
 
@@ -194,7 +189,6 @@ function unSymmetrize(P::Partition)
         randomizedP1 = rndPart(P)
         randomizedP2 = rndPart(P)
 
-
         P2 = randomizedP1 * randomizedP2
         P2 = roundMat(P2)
 
@@ -210,7 +204,6 @@ function unSymmetrize(P::Partition)
     return P
 end
 
-
 """
     blockDiagonalize(P::Partition, verbose = true; epsilon = 1e-8, complex = false)
 
@@ -222,7 +215,6 @@ Determines a block-diagonalization of a (Jordan)-algebra given by a partition `P
 
 * `blkd.blkSizes` is an integer array of the sizes of the blocks.
 * `blkd.blks` is an array of length `P.n` containing arrays of (real/complex) matrices of sizes `blkd.blkSizes`. I.e. `blkd.blks[i]` is the image of the basis element `P.P .== i`.
-    
 """
 function blockDiagonalize(P::Partition, verbose = true; epsilon = 1e-8, complex = false)
     P2 = P
@@ -284,7 +276,6 @@ function blockDiagonalize(P::Partition, verbose = true; epsilon = 1e-8, complex 
         end
         return nothing
     end
-
 
     verbose && println("Determining the algebra-isomorphism...")
 
@@ -355,6 +346,5 @@ function blockDiagonalize(P::Partition, verbose = true; epsilon = 1e-8, complex 
     blockSizes = [size(b)[1] for b in blockDiagonalization[1]]
     return (blkSizes = blockSizes, blks = blockDiagonalization)
 end
-
 
 end
