@@ -253,12 +253,10 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = 1e-
     # split by eigenvalues
     roundedEV = round.(F.values; digits = 10)
     uniqueEV = unique(roundedEV)
-    testEV = [[i for i in 1:length(roundedEV) if roundedEV[i] == u] for u in uniqueEV]
-    countEV = length.(testEV)
+    indEV = [[i for i in 1:length(roundedEV) if roundedEV[i] == u] for u in uniqueEV]
+    countEV = length.(indEV)
     csEV = vcat([0], cumsum(countEV))
     csEV .+= 1
-
-    QSplit = [Q[:, [i for i = 1:length(roundedEV) if roundedEV[i] == u]] for u in uniqueEV]
 
     K = collect(1:length(uniqueEV))
     getRandomMatrix()
@@ -298,7 +296,7 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = 1e-
     blockSizes = Int64[]
     for (Ki, countKi) in zip(uniqueKs, countKis)
 
-        QKi = hcat([QSplit[i] for i in 1:length(uniqueEV) if K[i] == Ki]...)
+        QKi = hcat((view(Q, :, el) for (i, el) in enumerate(indEV) if K[i] == Ki)...)
         B1 = Symmetric(QKi' * getRandomMatrix() * QKi)
         QKi3 = zeros(T, size(B1))
 
