@@ -214,6 +214,17 @@ function unSymmetrize(P::Partition)
     return P
 end
 
+# modifies r and A in place according to P
+# will fail if P.P contains 0 entries
+function getRandomMatrix!(r, A, P)
+    rand!(r)
+    @inbounds for i in eachindex(P.P)
+        A[i] = r[P.P[i]]
+    end
+    # A .+= A' # not done in the real case in Daniel's code
+    return A
+end
+
 """
     blockDiagonalize(P::Partition, verbose = true; epsilon = 1e-8, complex = false)
 
@@ -233,21 +244,13 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = 1e-
     end
 
     r = Vector{T}(undef, P.n)
-    A = Matrix{T}(undef, size(P.P)) # used for getRandomMatrix
-    tmp = Matrix{T}(undef, size(P.P)) # used for V' * A * V
-    # will fail if P.P contains 0 entries
-    function getRandomMatrix()
-        rand!(r)
-        @inbounds for i in eachindex(P.P)
-            A[i] = r[P.P[i]]
-        end
-        # A .+= A' # not done in the real case in Daniel's code
-        return A
-    end
+    A = Matrix{T}(undef, size(P.P)) # used for getRandomMatrix!
+    B = Matrix{T}(undef, size(P.P)) # used for V' * A * V
 
     verbose && println("Determining block sizes...")
 
-    F = eigen(getRandomMatrix())
+    getRandomMatrix!(r, A, P)
+    F = eigen(A)
     Q = F.vectors
 
     # split by eigenvalues
@@ -259,9 +262,9 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = 1e-
     csEV .+= 1
 
     K = collect(1:length(uniqueEV))
-    getRandomMatrix()
-    mul!(tmp, A, Q)
-    mul!(A, Q', tmp)
+    getRandomMatrix!(r, A, P)
+    mul!(B, A, Q)
+    mul!(A, Q', B)
     for i in 1:length(uniqueEV), j in i+1:length(uniqueEV)
         if K[i] != K[j] && countEV[i] == countEV[j]
             if any(x -> abs(x) ≥ epsilon, A[csEV[i]:csEV[i+1]-1, csEV[j]:csEV[j+1]-1])
@@ -270,21 +273,21 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = 1e-
         end
     end
     uniqueKs = unique(K)
-    countKis = [sum(1 for elK in K if elK == Ki) for Ki in uniqueKs]
+    blockSizes = [sum(1 for elK in K if elK == Ki) for Ki in uniqueKs]
 
-    verbose && println("Block sizes are $(sort(countKis))")
+    verbose && println("Block sizes are $(sort(blockSizes))")
 
-    if !complex && sum(x -> (x * (x + 1)) ÷ 2, countKis) != P.n
+    if !complex && sum(x -> (x * (x + 1)) ÷ 2, blockSizes) != P.n
         if verbose
             @error("Dimensions do not match up. Rounding error (try different epsilons and/or try again) or not block-diagonalizable over the reals (try parameter complex = true).")
-            @show sum(x -> (x * (x + 1)) ÷ 2, countKis)
+            @show sum(x -> (x * (x + 1)) ÷ 2, blockSizes)
             @show P.n
         end
         return nothing
-    elseif complex && sum(x -> x ^ 2, countKis) != P.n
+    elseif complex && sum(x -> x ^ 2, blockSizes) != P.n
         if verbose
             @error("Dimensions do not match up. Probably a rounding error (try different epsilons and/or try again).")
-            @show sum(x -> x ^ 2, countKis)
+            @show sum(x -> x ^ 2, blockSizes)
             @show P.n
         end
         return nothing
@@ -293,39 +296,39 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = 1e-
     verbose && println("Determining the algebra-isomorphism...")
 
     reducedQis = Matrix{T}[]
-    blockSizes = Int64[]
-    for (Ki, countKi) in zip(uniqueKs, countKis)
+    for i in eachindex(uniqueKs)
+        Ki = uniqueKs[i]
+        bs = blockSizes[i]
 
         QKi = hcat((view(Q, :, el) for (i, el) in enumerate(indEV) if K[i] == Ki)...)
-        B1 = Symmetric(QKi' * getRandomMatrix() * QKi)
-        QKi3 = zeros(T, size(B1))
+        getRandomMatrix!(r, A, P)
+        C = QKi' * A * QKi # Symmetric needed in general?
+        QKi3 = zeros(T, size(C))
 
         mult = countEV[Ki]
 
         QKi3[1:mult, 1:mult] .= I(mult)
-        for j in 2:countKi
+        for j in 2:bs
             ind = mult*(j-1) .+ (1:mult)
-            QKi3[ind, ind] .= inv(B1[1:mult, ind])
+            QKi3[ind, ind] .= inv(C[1:mult, ind])
             QKi3[ind, ind] ./= norm(QKi3[mult*(j-1)+1, ind])
         end
 
-        Per = zeros(T, size(B1))
-        for i in 1:countKi, j in 1:mult
-            Per[i+countKi*(j-1), j+mult*(i-1)] = 1
+        Per = zeros(T, size(C))
+        for i in 1:bs, j in 1:mult
+            Per[i+bs*(j-1), j+mult*(i-1)] = 1
         end
 
-        reducedQi = (QKi * QKi3 * Per')[:, 1:countKi]
+        reducedQi = (QKi * QKi3 * Per')[:, 1:bs]
 
         push!(reducedQis, reducedQi)
-        push!(blockSizes, size(reducedQi, 2))
     end
 
     verbose && println("Calculating image of the basis of the algebra...")
 
-    # PSplit = [P.P .== i for i in 1:P.n]
-    # blockDiagonalization = [[roundToZero!(B) for B in [Qi' * P * Qi for Qi in reducedQis]] for P in PSplit]
-    blockDiagonalization = [[Matrix{T}(undef, blockSizes[i], blockSizes[i]) for i in eachindex(blockSizes)] for _ in 1:P.n]
-    tmp = [Matrix{T}(undef, blockSizes[i], blockSizes[i]) for i in eachindex(blockSizes)]
+    # blockDiagonalization = [[roundToZero!(B) for B in [Qi' * P * Qi for Qi in reducedQis]] for P in [P.P .== i for i in 1:P.n]]
+    blockDiagonalization = [[Matrix{T}(undef, bs, bs) for bs in blockSizes] for _ in 1:P.n]
+    tmp = [Matrix{T}(undef, bs, bs) for bs in blockSizes]
     for (x, y) in axes(P.P)
         PP = P.P[x, y]
         for (i, Qi) in enumerate(reducedQis)
