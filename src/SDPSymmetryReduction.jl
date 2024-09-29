@@ -252,7 +252,10 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = 1e-
     # split by eigenvalues
     roundedEV = round.(F.values, digits = 10)
     uniqueEV = unique(roundedEV)
-    countEV = [count(roundedEV .== u) for u in uniqueEV]
+    countEV = zeros(Int, length(uniqueEV))
+    for rev in roundedEV
+        countEV[findfirst(x -> x == rev, uniqueEV)] += 1
+    end
 
     QSplit = [Q[:, [i for i = 1:length(roundedEV) if roundedEV[i] == u]] for u in uniqueEV]
 
