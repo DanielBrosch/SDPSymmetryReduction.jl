@@ -33,7 +33,7 @@ function roundToZero(f::Complex)
     return roundToZero(real(f)) + im * roundToZero(imag(f))
 end
 
-function roundToZero!(M::Matrix)
+function roundToZero!(M::Array)
     @inbounds for i in eachindex(M)
         M[i] = roundToZero(M[i])
     end
@@ -256,8 +256,6 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = 1e-
 
     QSplit = [Q[:, [i for i = 1:length(roundedEV) if roundedEV[i] == u]] for u in uniqueEV]
 
-    @time PSplit = [P.P .== i for i = 1:P.n]
-
     K = collect(1:length(uniqueEV))
     tmp = getRandomMatrix()
     for i = 1:length(uniqueEV), j = i:length(uniqueEV)
@@ -320,6 +318,7 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = 1e-
 
     verbose && println("Calculating image of the basis of the algebra...")
 
+    # PSplit = [P.P .== i for i = 1:P.n]
     # blockDiagonalization = [[roundToZero!(B) for B in [Qi' * P * Qi for Qi in reducedQis]] for P in PSplit]
     blockDiagonalization = [[Matrix{T}(undef, blockSizes[i], blockSizes[i]) for i in eachindex(blockSizes)] for _ in 1:P.n]
     tmp = [Matrix{T}(undef, blockSizes[i], blockSizes[i]) for i in eachindex(blockSizes)]
