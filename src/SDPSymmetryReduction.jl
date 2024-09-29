@@ -14,9 +14,13 @@ export Partition, admPartSubspace, blockDiagonalize
 
 A partition subspace. `P.n` is the number of parts, and `P.P` an integer matrix defining the basis elements.
 """
-struct Partition
-    n::Int64 # Number of parts
-    P::Matrix{Int64} # Matrix with entries 1,...,n
+struct Partition{TI <: Integer}
+    n::TI # Number of parts
+    P::Matrix{TI} # Matrix with entries 1,...,n
+end
+
+function Partition(q::Matrix{TI}) where {TI <: Integer}
+    return Partition{TI}(maximum(q), q)
 end
 
 """
