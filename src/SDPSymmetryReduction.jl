@@ -327,9 +327,9 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = 1e-
     verbose && println("Calculating image of the basis of the algebra...")
 
     # blockDiagonalization = [[roundToZero!(B) for B in [Qi' * P * Qi for Qi in reducedQis]] for P in [P.P .== i for i in 1:P.n]]
-    blockDiagonalization = [[Matrix{T}(undef, bs, bs) for bs in blockSizes] for _ in 1:P.n]
+    blockDiagonalization = [[zeros(T, bs, bs) for bs in blockSizes] for _ in 1:P.n]
     tmp = [Matrix{T}(undef, bs, bs) for bs in blockSizes]
-    for (x, y) in axes(P.P)
+    for x in axes(P.P, 1), y in axes(P.P, 2)
         PP = P.P[x, y]
         for (i, Qi) in enumerate(reducedQis)
             mul!(tmp[i], Qi[x, :], Qi[y, :]') # might need to swap x and y for non symmetric matrices
