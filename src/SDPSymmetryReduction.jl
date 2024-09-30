@@ -242,7 +242,7 @@ Determines a block-diagonalization of a (Jordan)-algebra given by a partition `P
 * `blkd.blkSizes` is an integer array of the sizes of the blocks.
 * `blkd.blks` is an array of length `P.n` containing arrays of (real/complex) matrices of sizes `blkd.blkSizes`. I.e. `blkd.blks[i]` is the image of the basis element `P.P .== i`.
 """
-function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = 1e-8, complex = false) where {T <: Number}
+function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = 1e-8) where {T <: Number}
     complex = T <: Complex
     if complex
         P = unSymmetrize(P)
@@ -352,6 +352,15 @@ function blockDiagonalize(P::Partition, verbose = true; epsilon = 1e-8, complex 
     else
         return blockDiagonalize(ComplexF64, P, verbose; epsilon)
     end
+end
+# change the API without breaking the previous one (for now)
+function blockDiagonalize(::Type{T}, q::Matrix; verbose = true, epsilon = Base.rtoldefault(T), seed = 0) where {T <: Number}
+    Random.seed!(seed)
+    return blockDiagonalization(T, Partition(q), verbose; epsilon).blks
+end
+function blockDiagonalize(q::Matrix; verbose = true, epsilon = 1e-8, complex = false, seed = 0)
+    Random.seed!(seed)
+    return blockDiagonalization(Partition(q), verbose; epsilon, complex).blks
 end
 
 function reduce(p::Matrix, blks, P::Partition; check = false)
