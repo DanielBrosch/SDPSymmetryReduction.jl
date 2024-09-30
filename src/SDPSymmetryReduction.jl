@@ -356,19 +356,20 @@ end
 # change the API without breaking the previous one (for now)
 function blockDiagonalize(::Type{T}, q::Matrix; verbose = true, epsilon = Base.rtoldefault(T), seed = 0) where {T <: Number}
     Random.seed!(seed)
-    return blockDiagonalization(T, Partition(q), verbose; epsilon).blks
+    return blockDiagonalize(T, Partition(q), verbose; epsilon).blks
 end
 function blockDiagonalize(q::Matrix; verbose = true, epsilon = 1e-8, complex = false, seed = 0)
     Random.seed!(seed)
-    return blockDiagonalization(Partition(q), verbose; epsilon, complex).blks
+    return blockDiagonalize(Partition(q), verbose; epsilon, complex).blks
 end
 
-function reduce(p::Matrix, blks, P::Partition; check = false)
-    ind = [findfirst(x -> x == i, P.P) for i in 1:P.n] # add in Partition?
+function reduce(p::Matrix, blks, q::Matrix; check = false)
+    n = maximum(q)
+    ind = [findfirst(x -> x == i, q) for i in 1:n]
     if check
-        @assert p[ind][P.P] ≈ p
+        @assert p[ind][q] ≈ p
     end
-    return roundToZero!.(sum(p[ind[i]] * blks[i] for i in 1:P.n))
+    return roundToZero!.(sum(p[ind[i]] * blks[i] for i in 1:n))
 end
 export reduce
 
