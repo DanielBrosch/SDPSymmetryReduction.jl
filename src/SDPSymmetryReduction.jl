@@ -279,6 +279,7 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = 1e-
     end
     uniqueKs = unique(K)
     blockSizes = [sum(1 for elK in K if elK == Ki) for Ki in uniqueKs]
+    mults = [countEV[findfirst(elK -> elK == Ki, K)] for Ki in uniqueKs]
 
     verbose && println("Block sizes are $(sort(blockSizes))")
 
@@ -343,7 +344,7 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = 1e-
     end
     broadcast.(roundToZero!, blockDiagonalization)
 
-    return (blkSizes = blockSizes, blks = blockDiagonalization)
+    return (blkSizes = blockSizes, blks = blockDiagonalization, mults = mults)
 end
 # move the type unstability to this function, also avoid breaking the old syntax
 function blockDiagonalize(P::Partition, verbose = true; epsilon = 1e-8, complex = false)
@@ -356,14 +357,16 @@ end
 # change the API without breaking the previous one (for now)
 function blockDiagonalize(::Type{T}, q::Matrix; verbose = true, epsilon = Base.rtoldefault(T), seed = 0) where {T <: Number}
     Random.seed!(seed)
-    return blockDiagonalize(T, Partition(q), verbose; epsilon).blks
+    res = blockDiagonalize(T, Partition(q), verbose; epsilon)
+    return res.mults, res.blks
 end
 function blockDiagonalize(q::Matrix; verbose = true, epsilon = 1e-8, complex = false, seed = 0)
     Random.seed!(seed)
-    return blockDiagonalize(Partition(q), verbose; epsilon, complex).blks
+    res = blockDiagonalize(Partition(q), verbose; epsilon, complex)
+    return res.mults, res.blks
 end
 
-function reduce(p::Matrix, blks, q::Matrix; check = false)
+function block_reduce(p::Matrix, q::Matrix, blks, muls; check = false)
     n = maximum(q)
     ind = [findfirst(x -> x == i, q) for i in 1:n]
     if check
@@ -371,6 +374,5 @@ function reduce(p::Matrix, blks, q::Matrix; check = false)
     end
     return roundToZero!.(sum(p[ind[i]] * blks[i] for i in 1:n))
 end
-export reduce
 
 end
