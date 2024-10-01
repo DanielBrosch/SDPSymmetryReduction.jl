@@ -277,9 +277,10 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = 1e-
             end
         end
     end
-    uniqueKs = unique(K)
+    ind_uniqueK = unique(i -> K[i], eachindex(K))
+    uniqueKs = K[ind_uniqueK]
     blockSizes = [sum(1 for elK in K if elK == Ki) for Ki in uniqueKs]
-    mults = [countEV[findfirst(elK -> elK == Ki, K)] for Ki in uniqueKs]
+    mults = countEV[ind_uniqueK]
 
     verbose && println("Block sizes are $(sort(blockSizes))")
 
