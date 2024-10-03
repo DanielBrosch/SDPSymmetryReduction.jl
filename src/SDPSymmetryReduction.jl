@@ -220,11 +220,11 @@ function unSymmetrize(P::Partition)
 end
 
 # modifies r and A in place according to P
-# will fail if P.P contains 0 entries
 function getRandomMatrix!(r, A, P)
     rand!(r)
+    r[1] = 0 # write it explicitly for clarify
     @inbounds for i in eachindex(P.P)
-        A[i] = r[P.P[i]]
+        A[i] = r[P.P[i]+1]
     end
     # A .+= A' # not done in the real case in Daniel's code
     return A
@@ -248,7 +248,7 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = 1e-
         P = unSymmetrize(P)
     end
 
-    r = Vector{T}(undef, P.n)
+    r = Vector{T}(undef, P.n + 1)
     A = Matrix{T}(undef, size(P.P)) # used for getRandomMatrix!
     B = Matrix{T}(undef, size(P.P)) # used for V' * A * V
 
@@ -338,9 +338,11 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = 1e-
     tmp = [Matrix{T}(undef, bs, bs) for bs in blockSizes]
     for x in axes(P.P, 1), y in axes(P.P, 2)
         PP = P.P[x, y]
-        for (i, Qi) in enumerate(reducedQis)
-            mul!(tmp[i], Qi[x, :], Qi[y, :]') # might need to swap x and y for non symmetric matrices
-            blockDiagonalization[PP][i] .+= tmp[i]
+        if PP != 0
+            for (i, Qi) in enumerate(reducedQis)
+                mul!(tmp[i], Qi[x, :], Qi[y, :]') # might need to swap x and y for non symmetric matrices
+                blockDiagonalization[PP][i] .+= tmp[i]
+            end
         end
     end
     broadcast.(roundToZero!, blockDiagonalization)
@@ -371,7 +373,7 @@ function block_reduce(p::Matrix, q::Matrix, blks, muls; check = false)
     n = maximum(q)
     ind = [findfirst(x -> x == i, q) for i in 1:n]
     if check
-        @assert p[ind][q] ≈ p
+        @assert vcat([0], p[ind])[q .+ 1] ≈ p
     end
     return roundToZero!.(sum(p[ind[i]] * blks[i] for i in 1:n))
 end
