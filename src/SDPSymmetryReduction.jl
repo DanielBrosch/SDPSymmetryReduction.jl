@@ -14,13 +14,13 @@ export Partition, admPartSubspace, blockDiagonalize
 
 A partition subspace. `P.n` is the number of parts, and `P.P` an integer matrix defining the basis elements.
 """
-struct Partition{TI <: Integer}
-    n::TI # Number of parts
-    P::Matrix{TI} # Matrix with entries 1,...,n
+struct Partition{IT <: Integer}
+    n::IT # Number of parts
+    P::Matrix{IT} # Matrix with entries 1,...,n
 end
 
-function Partition(q::Matrix{TI}) where {TI <: Integer}
-    return Partition{TI}(maximum(q), q)
+function Partition(q::Matrix{IT}) where {IT <: Integer}
+    return Partition{IT}(maximum(q), q)
 end
 
 """
@@ -194,30 +194,25 @@ WL algorithm to "un-symmetrize" the Jordan algebra corresponding to `P`.
 function unSymmetrize(P::Partition)
     P = deepcopy(P)
     dim = P.n
-
     it = 0
-
     # Iterate until converged
     while true
         it += 1
-
         randomizedP1 = rndPart(P)
         randomizedP2 = rndPart(P)
-
         P2 = randomizedP1 * randomizedP2
         P2 = roundMat(P2)
-
         P = coarsestPart(P, part(P2))
-
         # Check if converged
         if dim == P.n
             break
         end
-
         dim = P.n
     end
     return P
 end
+unSymmetrize(q::Matrix) = unSymmetrize(Partition(q))
+export unSymmetrize
 
 # modifies r and A in place according to P
 function getRandomMatrix!(r, A, P)
@@ -243,7 +238,7 @@ Determines a block-diagonalization of a (Jordan)-algebra given by a partition `P
 * `blkd.blks` is an array of length `P.n` containing arrays of (real/complex) matrices of sizes `blkd.blkSizes`. I.e. `blkd.blks[i]` is the image of the basis element `P.P .== i`.
 * `blkd.mults` is an integer array of the multiplicities of the blocks.
 """
-function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = Base.rtoldefault(T)) where {T <: Number}
+function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = Base.rtoldefault(real(T))) where {T <: Number}
     complex = T <: Complex
     if complex
         P = unSymmetrize(P)
@@ -359,7 +354,7 @@ function blockDiagonalize(P::Partition, verbose = true; epsilon = Base.rtoldefau
     end
 end
 # change the API without breaking the previous one (for now)
-function blockDiagonalize(::Type{T}, q::Matrix; verbose = true, epsilon = Base.rtoldefault(T), seed = 0) where {T <: Number}
+function blockDiagonalize(::Type{T}, q::Matrix; verbose = true, epsilon = Base.rtoldefault(real(T)), seed = 0) where {T <: Number}
     Random.seed!(seed)
     res = blockDiagonalize(T, Partition(q), verbose; epsilon)
     return res.mults, res.blks
@@ -368,7 +363,7 @@ function blockDiagonalize(q::Matrix; verbose = true, epsilon = Base.rtoldefault(
     return blockDiagonalize(Float64, q; verbose, epsilon, seed)
 end
 
-function block_reduce(p::Matrix, q::Matrix, blks, muls; check = false)
+function block_reduce(p::Matrix, q::Matrix, blks; check = false)
     n = maximum(q)
     ind = [findfirst(x -> x == i, q) for i in 1:n]
     if check
@@ -376,5 +371,6 @@ function block_reduce(p::Matrix, q::Matrix, blks, muls; check = false)
     end
     return roundToZero!.(sum(p[ind[i]] * blks[i] for i in 1:n))
 end
+export block_reduce
 
 end
