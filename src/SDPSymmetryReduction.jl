@@ -222,7 +222,7 @@ end
 # modifies r and A in place according to P
 function getRandomMatrix!(r, A, P)
     rand!(r)
-    r[1] = 0 # write it explicitly for clarify
+    r[1] = 0 # write it explicitly for clarity
     @inbounds for i in eachindex(P.P)
         A[i] = r[P.P[i]+1]
     end
@@ -241,8 +241,9 @@ Determines a block-diagonalization of a (Jordan)-algebra given by a partition `P
 
 * `blkd.blkSizes` is an integer array of the sizes of the blocks.
 * `blkd.blks` is an array of length `P.n` containing arrays of (real/complex) matrices of sizes `blkd.blkSizes`. I.e. `blkd.blks[i]` is the image of the basis element `P.P .== i`.
+* `blkd.mults` is an integer array of the multiplicities of the blocks.
 """
-function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = 1e-8) where {T <: Number}
+function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = Base.rtoldefault(T)) where {T <: Number}
     complex = T <: Complex
     if complex
         P = unSymmetrize(P)
@@ -350,7 +351,7 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = 1e-
     return (blkSizes = blockSizes, blks = blockDiagonalization, mults = mults)
 end
 # move the type unstability to this function, also avoid breaking the old syntax
-function blockDiagonalize(P::Partition, verbose = true; epsilon = 1e-8, complex = false)
+function blockDiagonalize(P::Partition, verbose = true; epsilon = Base.rtoldefault(Float64), complex = false)
     if !complex
         return blockDiagonalize(Float64, P, verbose; epsilon)
     else
@@ -363,10 +364,8 @@ function blockDiagonalize(::Type{T}, q::Matrix; verbose = true, epsilon = Base.r
     res = blockDiagonalize(T, Partition(q), verbose; epsilon)
     return res.mults, res.blks
 end
-function blockDiagonalize(q::Matrix; verbose = true, epsilon = 1e-8, complex = false, seed = 0)
-    Random.seed!(seed)
-    res = blockDiagonalize(Partition(q), verbose; epsilon, complex)
-    return res.mults, res.blks
+function blockDiagonalize(q::Matrix; verbose = true, epsilon = Base.rtoldefault(Float64), seed = 0)
+    return blockDiagonalize(Float64, q; verbose, epsilon, seed)
 end
 
 function block_reduce(p::Matrix, q::Matrix, blks, muls; check = false)
