@@ -8,7 +8,6 @@ export Partition, admPartSubspace, blockDiagonalize
 
 # Stores a partition of [m]×[m] in a single matrix
 # Entries of P should always be 1,…,n
-# Useful?
 """
     Partition
 
@@ -215,13 +214,15 @@ unSymmetrize(q::Matrix) = unSymmetrize(Partition(q))
 export unSymmetrize
 
 # modifies r and A in place according to P
-function getRandomMatrix!(r, A, P)
+function getRandomMatrix!(r, A, P; complex = false)
     rand!(r)
     r[1] = 0 # write it explicitly for clarity
     @inbounds for i in eachindex(P.P)
         A[i] = r[P.P[i]+1]
     end
-    # A .+= A' # not done in the real case in Daniel's code
+    if complex
+        A .+= A'
+    end
     return A
 end
 
@@ -236,7 +237,6 @@ Determines a block-diagonalization of a (Jordan)-algebra given by a partition `P
 
 * `blkd.blkSizes` is an integer array of the sizes of the blocks.
 * `blkd.blks` is an array of length `P.n` containing arrays of (real/complex) matrices of sizes `blkd.blkSizes`. I.e. `blkd.blks[i]` is the image of the basis element `P.P .== i`.
-* `blkd.mults` is an integer array of the multiplicities of the blocks.
 """
 function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = Base.rtoldefault(real(T))) where {T <: Number}
     complex = T <: Complex
@@ -250,7 +250,7 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = Bas
 
     verbose && println("Determining block sizes...")
 
-    getRandomMatrix!(r, A, P)
+    getRandomMatrix!(r, A, P; complex)
     F = eigen(A)
     Q = F.vectors
 
@@ -263,7 +263,7 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = Bas
     csEV .+= 1
 
     K = collect(1:length(uniqueEV))
-    getRandomMatrix!(r, A, P)
+    getRandomMatrix!(r, A, P; complex)
     mul!(B, A, Q)
     mul!(A, Q', B)
     for i in 1:length(uniqueEV), j in i+1:length(uniqueEV)
@@ -276,7 +276,6 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = Bas
     ind_uniqueK = unique(i -> K[i], eachindex(K))
     uniqueKs = K[ind_uniqueK]
     blockSizes = [sum(1 for elK in K if elK == Ki) for Ki in uniqueKs]
-    mults = countEV[ind_uniqueK]
 
     verbose && println("Block sizes are $(sort(blockSizes))")
 
@@ -304,7 +303,7 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = Bas
         bs = blockSizes[i]
 
         QKi = hcat((view(Q, :, el) for (i, el) in enumerate(indEV) if K[i] == Ki)...)
-        getRandomMatrix!(r, A, P)
+        getRandomMatrix!(r, A, P; complex)
         C = QKi' * A * QKi # Symmetric needed in general?
         QKi3 = zeros(T, size(C))
 
@@ -343,7 +342,7 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = Bas
     end
     broadcast.(roundToZero!, blockDiagonalization)
 
-    return (blkSizes = blockSizes, blks = blockDiagonalization, mults = mults)
+    return (blkSizes = blockSizes, blks = blockDiagonalization)
 end
 # move the type unstability to this function, also avoid breaking the old syntax
 function blockDiagonalize(P::Partition, verbose = true; epsilon = Base.rtoldefault(Float64), complex = false)
@@ -353,24 +352,5 @@ function blockDiagonalize(P::Partition, verbose = true; epsilon = Base.rtoldefau
         return blockDiagonalize(ComplexF64, P, verbose; epsilon)
     end
 end
-# change the API without breaking the previous one (for now)
-function blockDiagonalize(::Type{T}, q::Matrix; verbose = true, epsilon = Base.rtoldefault(real(T)), seed = 0) where {T <: Number}
-    Random.seed!(seed)
-    res = blockDiagonalize(T, Partition(q), verbose; epsilon)
-    return res.mults, res.blks
-end
-function blockDiagonalize(q::Matrix; verbose = true, epsilon = Base.rtoldefault(Float64), seed = 0)
-    return blockDiagonalize(Float64, q; verbose, epsilon, seed)
-end
-
-function block_reduce(p::Matrix, q::Matrix, blks; check = false)
-    n = maximum(q)
-    ind = [findfirst(x -> x == i, q) for i in 1:n]
-    if check
-        @assert vcat([0], p[ind])[q .+ 1] ≈ p
-    end
-    return roundToZero!.(sum(p[ind[i]] * blks[i] for i in 1:n))
-end
-export block_reduce
 
 end
