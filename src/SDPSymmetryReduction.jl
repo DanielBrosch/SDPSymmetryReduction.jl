@@ -5,6 +5,8 @@ using Random
 using SparseArrays
 
 export Partition, admPartSubspace, blockDiagonalize
+include("utils.jl")
+include("compat.jl")
 
 # Stores a partition of [m]×[m] in a single matrix
 # Entries of P should always be 1,…,n
@@ -22,27 +24,6 @@ function Partition(q::Matrix{IT}) where {IT <: Integer}
     return Partition{IT}(maximum(q), q)
 end
 
-"""
-    roundToZero(f::Number)
-
-Round numbers near zero to zero.
-"""
-function roundToZero(f::T) where {T <: Real}
-    if abs(f) < Base.rtoldefault(T)
-        return zero(T)
-    end
-    return f
-end
-function roundToZero(f::Complex)
-    return roundToZero(real(f)) + im * roundToZero(imag(f))
-end
-
-function roundToZero!(M::Array)
-    @inbounds for i in eachindex(M)
-        M[i] = roundToZero(M[i])
-    end
-    return M
-end
 
 """
     part(M::Matrix{T}) where T
@@ -88,14 +69,6 @@ function roundMat(M)
     return tmp
 end
 
-"""
-    orthProject(A::AbstractMatrix{T}, v::AbstractVector{T}) where T
-
-Project v orthogonally to the span of columns of A
-"""
-function orthProject(A::AbstractMatrix{T}, v::AbstractVector{T}) where T
-    return A * ((A' * A) \ Vector(A' * v))
-end
 
 """
     projectAndRound(M::AbstractMatrix{T}, A::AbstractMatrix{T}; round = true) where T
