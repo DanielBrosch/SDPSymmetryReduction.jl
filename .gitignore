@@ -5,3 +5,4 @@
 /docs/build/
 /docs/src/examples/*.md
 /.vscode
+test/qapdata

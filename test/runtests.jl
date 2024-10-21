@@ -1,6 +1,8 @@
-using SDPSymmetryReduction
-using LinearAlgebra
 using Test
+using LinearAlgebra
+using SparseArrays
+using SDPSymmetryReduction
+import CSDP
 
 @testset "SDPSymmetryReduction.jl" begin
     
@@ -57,4 +59,7 @@ using Test
     end
 
     @test failsBlockDiagonalize()
+    include("sd_problems.jl")
+    include("lovasz.jl")
+    include("qap.jl")
 end

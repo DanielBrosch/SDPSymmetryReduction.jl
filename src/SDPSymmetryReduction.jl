@@ -244,11 +244,14 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = Bas
         P = unSymmetrize(P)
     end
 
+    verbose && println("Determining block sizes...")
+
+    @time begin
+
     r = Vector{T}(undef, P.n + 1)
     A = Matrix{T}(undef, size(P.P)) # used for getRandomMatrix!
     B = Matrix{T}(undef, size(P.P)) # used for V' * A * V
 
-    verbose && println("Determining block sizes...")
 
     getRandomMatrix!(r, A, P; complex)
     F = eigen(A)
@@ -268,7 +271,8 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = Bas
     mul!(A, Q', B)
     for i in 1:length(uniqueEV), j in i+1:length(uniqueEV)
         if K[i] != K[j] && countEV[i] == countEV[j]
-            if any(x -> abs(x) ≥ epsilon, A[csEV[i]:csEV[i+1]-1, csEV[j]:csEV[j+1]-1])
+                A_ij = A[csEV[i]:csEV[i+1]-1, csEV[j]:csEV[j+1]-1]
+                if any(x -> abs(x) ≥ epsilon, A_ij)
                 K[K.==K[j]] .= K[i]
             end
         end
@@ -277,6 +281,7 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = Bas
     uniqueKs = K[ind_uniqueK]
     blockSizes = [sum(1 for elK in K if elK == Ki) for Ki in uniqueKs]
 
+    end
     verbose && println("Block sizes are $(sort(blockSizes))")
 
     if !complex && sum(x -> (x * (x + 1)) ÷ 2, blockSizes) != P.n
@@ -297,6 +302,7 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = Bas
 
     verbose && println("Determining the algebra-isomorphism...")
 
+    @time begin
     reducedQis = Matrix{T}[]
     for i in eachindex(uniqueKs)
         Ki = uniqueKs[i]
@@ -325,9 +331,11 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = Bas
 
         push!(reducedQis, reducedQi)
     end
+    end
 
     verbose && println("Calculating image of the basis of the algebra...")
 
+    @time begin
     # blockDiagonalization = [[roundToZero!(B) for B in [Qi' * P * Qi for Qi in reducedQis]] for P in [P.P .== i for i in 1:P.n]]
     blockDiagonalization = [[zeros(T, bs, bs) for bs in blockSizes] for _ in 1:P.n]
     tmp = [Matrix{T}(undef, bs, bs) for bs in blockSizes]
@@ -342,6 +350,7 @@ function blockDiagonalize(::Type{T}, P::Partition, verbose = true; epsilon = Bas
     end
     broadcast.(roundToZero!, blockDiagonalization)
 
+    end
     return (blkSizes = blockSizes, blks = blockDiagonalization)
 end
 # move the type unstability to this function, also avoid breaking the old syntax
