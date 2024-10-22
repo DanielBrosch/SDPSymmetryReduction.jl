@@ -1,6 +1,9 @@
+function timed_print(io, t; msg=nothing)
+    Base.time_print(io, t.time * 1.0e9, t.gcstats.allocd, t.gcstats.total_time, Base.gc_alloc_count(t.gcstats), t.lock_conflicts, t.compile_time * 1.0e9, t.recompile_time * 1.0e9, true; msg=msg)
+end
+
 """
     clamptol(f::T; atol=Base.rtoldefault(T)) where T<:Number
-
 Clamps numbers near zero to zero.
 """
 function clamptol(f::Number; atol=Base.rtoldefault(real(typeof(f))))
