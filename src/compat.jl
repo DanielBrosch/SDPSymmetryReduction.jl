@@ -27,7 +27,6 @@ function blockDiagonalize(P, verbose=true; epsilon=Base.rtoldefault(Float64), co
     if !complex
         return blockDiagonalize(Float64, P, verbose; epsilon)
     else
-        P = unSymmetrize(P)
         return blockDiagonalize(ComplexF64, P, verbose; epsilon)
     end
 end
@@ -51,15 +50,9 @@ function blockDiagonalize(
     epsilon=Base.rtoldefault(real(T))
 ) where {T}
 
-    Q_hat = try
-        diagonalize(T, P, verbose; epsilon=epsilon)
-    catch err
-        if err isa InvalidDecompositionField
-            @error err
-        else
-            rethrow(err)
-        end
-        return nothing
+    Q_hat = diagonalize(T, P; verbose=verbose, atol=epsilon)
+    if T <: Complex
+        P = desymmetrize(P)
     end
 
     # throws DimensionMismatch if appropriate
@@ -72,3 +65,5 @@ function blockDiagonalize(
 
     return (blkSizes=[size(q, 2) for q in Q_hat], blks=basis_img)
 end
+
+unSymmetrize(P) = desymmetrize(P)

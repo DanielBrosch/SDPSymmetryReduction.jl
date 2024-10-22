@@ -22,7 +22,10 @@ function check_block_sizes(T::Type{<:Complex}, Q, P::Partition, verbose::Bool)
     end
 end
 
-function diagonalize(::Type{T}, P::Partition, verbose=true; epsilon=Base.rtoldefault(real(T))) where {T<:Number}
+function diagonalize(::Type{T}, P::Partition; verbose=false, atol=1e-12 * size(P.P, 1)) where {T<:Number}
+    if T <: Complex
+        P = desymmetrize(P; verbose=verbose)
+    end
     A = Matrix{T}(undef, size(P.P))
 
     verbose && @info "Determining eigen-decomposition over $T..."

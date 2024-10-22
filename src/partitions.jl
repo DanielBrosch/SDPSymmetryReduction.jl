@@ -179,3 +179,33 @@ function admissible_subspace(
         @info "Minimal admissible subspace converged in $it iterations. Dimensions:" initial = maximal_dimension final = S.n
     return S
 end
+
+"""
+    desymmetrize(P::Partition)
+
+WL algorithm to "desymmetrize" the Jordan algebra corresponding to `P`.
+"""
+function desymmetrize(P::Partition; verbose=false)
+    dim = P.n
+    it = 0
+    M1 = Matrix{Float64}(undef, size(P.P))
+    M2 = Matrix{Float64}(undef, size(P.P))
+    M3 = Matrix{Float64}(undef, size(P.P))
+    # Iterate until converged
+    while true
+        it += 1
+        randomize!(M1, P)
+        randomize!(M2, P)
+        LinearAlgebra.mul!(M3, M1, M2)
+        M3 .= round.(clamptol.(M3); sigdigits=5)
+        P = refine(P, part(M3))
+        # Check if converged
+        if dim == P.n
+            break
+        end
+        dim = P.n
+    end
+    verbose && @info "unsymmetization converged in $it iterations"
+    return P
+end
+
