@@ -62,9 +62,8 @@ function blockDiagonalize(
         return nothing
     end
 
-    status = check_block_sizes(T, Q_hat, P, verbose)
-    verbose && @info "Diagonalization finished with $status."
-    status ≠ Success::Status && return nothing
+    # throws DimensionMismatch if appropriate
+    check_block_sizes(T, Q_hat, P, verbose)
 
     verbose && @info "Calculating image of the basis of the algebra..."
     t = @timed basis_img = basis_image(Q_hat, P)

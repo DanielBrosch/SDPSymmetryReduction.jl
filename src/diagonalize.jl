@@ -1,29 +1,25 @@
-@enum Status Success SymbolicError NumericError
-
-function check_block_sizes(::Type{<:Real}, Q, P::Partition, verbose::Bool)
+function check_block_sizes(T::Type{<:Real}, Q, P::Partition, verbose::Bool)
     block_sizes = [size(q, 2) for q in Q]
     final_dim = sum(s -> (s + 1) * s ÷ 2, block_sizes)
     if final_dim ≠ P.n
-        verbose && @error """Dimensions do not match up. Potentially due to
+        @error "Dimension mismatch over for $T:" (final_dim, block_sizes) expedcted_dim = P.n
+        throw(DimensionMismatch("""Decomposition failed potentially due to
         * Rounding error (try different epsilons and/or try again) or
-        * Algebra is not block-diagonalizable over the reals (try parameter complex = true).
-        """ (final_dim, block_sizes) P.n
-        return NumericError::Status
+        * Algebra is not block-diagonalizable over the reals (retry with complex type).
+        """))
     end
-    return Success::Status
 end
 
-function check_block_sizes(::Type{<:Complex}, Q, P::Partition, verbose::Bool)
+function check_block_sizes(T::Type{<:Complex}, Q, P::Partition, verbose::Bool)
     block_sizes = [size(q, 2) for q in Q]
     final_dim = sum(s -> s^2, block_sizes)
     if final_dim ≠ P.n
-        verbose && @error """Dimensions do not match up. Potentially due to
+        @error "Dimension mismatch over for $T:" (final_dim, block_sizes) expedcted_dim = P.n
+        throw(DimensionMismatch("""Decomposition failed potentially due to
         * Rounding error (try different epsilons and/or try again) or
         * Unknow reason, please consider submitting an issue.
-        """ (final_dim, block_sizes) P.n
-        return NumericError::Status
+         """))
     end
-    return Success::Status
 end
 
 function diagonalize(::Type{T}, P::Partition, verbose=true; epsilon=Base.rtoldefault(real(T))) where {T<:Number}
