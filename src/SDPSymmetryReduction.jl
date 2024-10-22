@@ -3,12 +3,13 @@ module SDPSymmetryReduction
 using LinearAlgebra
 using Random
 using SparseArrays
+using DataStructures
 
 export Partition, admPartSubspace, blockDiagonalize
 include("utils.jl")
 include("compat.jl")
 include("partitions.jl")
-
+include("eigen_decomposition.jl")
 
 """
     unSymmetrize(P::Partition)
