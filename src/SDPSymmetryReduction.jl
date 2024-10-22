@@ -7,56 +7,7 @@ using SparseArrays
 export Partition, admPartSubspace, blockDiagonalize
 include("utils.jl")
 include("compat.jl")
-
-# Stores a partition of [m]×[m] in a single matrix
-# Entries of P should always be 1,…,n
-"""
-    Partition
-
-A partition subspace. `P.n` is the number of parts, and `P.P` an integer matrix defining the basis elements.
-"""
-struct Partition{IT <: Integer}
-    n::IT # Number of parts
-    P::Matrix{IT} # Matrix with entries 1,...,n
-end
-
-function Partition(q::Matrix{IT}) where {IT <: Integer}
-    return Partition{IT}(maximum(q), q)
-end
-
-
-"""
-    part(M::Matrix{T}) where T
-
-Create a partition from the unique entries of `M`.
-"""
-function part(M::Matrix{T}) where T
-    u = unique(M)
-    filter!(e -> e ≠ 0, u)
-    d = Dict([(u[i], i) for i in eachindex(u)])
-    d[0] = 0
-    return Partition(size(u, 1), [d[i] for i in M])
-end
-
-"""
-    coarsestPart(P1::Partition, P2::Partition)
-
-Find the coarsest partition refining `P1` and `P2`.
-"""
-function coarsestPart(P1::Partition, P2::Partition)
-    return part(P1.P * (P2.n + 1) + P2.P)
-end
-
-"""
-    rndPart(P::Partition)
-
-Returns a random linear combination in the partition space `P`.
-"""
-function rndPart(P::Partition)
-    r = [rand() for i in 1:P.n+1]
-    r[1] = 0
-    return [r[i+1] for i in P.P]
-end
+include("partitions.jl")
 
 """
     roundMat(M)
