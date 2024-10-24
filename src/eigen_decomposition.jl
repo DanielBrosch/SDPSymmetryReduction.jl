@@ -133,6 +133,7 @@ function irreducible_decomposition(
     roots = unique(Kpartition)
 
     P_hat = Vector{Matrix{T}}(undef, length(roots))
+    A = randomize!(A, P)
 
     for P_idx in eachindex(roots, P_hat)
         root = roots[P_idx]
@@ -141,7 +142,6 @@ function irreducible_decomposition(
         # merge eigenspaces according to partition K
         QKi = reduce(hcat, [vectors(eigdec[i]) for i in Ki])
 
-        A = randomize!(A, P)
         QKᵢ′AQKᵢ = QKi' * A * QKi
 
         # Pi will be diagonal matrix diag(P₁, P₂, ..., P)
