@@ -20,7 +20,9 @@ function projectAndRound(M, A; round=true)
     return Float64.(reshape(v, size(M)...))
 end
 
-admPartSubspace(C, A, b, verbose=false) = admissible_subspace(C, A, b, verbose)
+function admPartSubspace(C, A, b, verbose=false)
+    return admissible_subspace(C, A, b; verbose=verbose)
+end
 
 # move the type unstability to this function, also avoid breaking the old syntax
 function blockDiagonalize(P, verbose=true; epsilon=Base.rtoldefault(Float64), complex=false)

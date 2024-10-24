@@ -101,11 +101,21 @@ See Section 5.2 of Permenter thesis.
 function admissible_subspace(
     C::AbstractVector{T},
     A::AbstractMatrix{T},
-    b::AbstractVector{T},
-    verbose::Bool=false;
-    rtol=Base.rtoldefault(real(T))
+    b::AbstractVector{T};
+    verbose::Bool=false,
+    rtol=Base.rtoldefault(real(T)),
 ) where {T<:AbstractFloat}
+    return admissible_subspace(UInt16, C, A, b; verbose=verbose, rtol=rtol)
+end
 
+function admissible_subspace(
+    ::Type{I},
+    C::AbstractVector{T},
+    A::AbstractMatrix{T},
+    b::AbstractVector{T};
+    verbose::Bool=false,
+    rtol=Base.rtoldefault(real(T)),
+) where {I<:Integer,T<:AbstractFloat}
     sigdigits = ceil(Int, -log10(rtol))
     n = isqrt(length(C))
     @assert n^2 == length(C)
@@ -133,8 +143,8 @@ function admissible_subspace(
     end
 
     # Initialize S as the span of the initial two elements
-    S = Partition(CL)
-    S = refine(S, Partition(X₀Lᵖ))
+    S = Partition{I}(CL)
+    S = refine(S, Partition{I}(X₀Lᵖ))
 
     maximal_dimension = (n^2 + n) ÷ 2
     current_dimension = S.n
@@ -152,7 +162,7 @@ function admissible_subspace(
             x .-= projLᵖ(x)
             x .= clamptol.(round.(x, sigdigits=sigdigits))
         end
-        S = refine(S, Partition(X))
+        S = refine(S, Partition{I}(X))
 
         if current_dimension != S.n
             X = randomize!(X, S)
@@ -162,7 +172,7 @@ function admissible_subspace(
         X² = mul!(X², X, X)
         X² .= clamptol.(round.(X², sigdigits=sigdigits))
 
-        S = refine(S, Partition(X²))
+        S = refine(S, Partition{I}(X²))
 
         # with probability 1 a random square does not refine S
         # only when S is already closed under taking squares,
