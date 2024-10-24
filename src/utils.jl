@@ -9,14 +9,15 @@ Clamps numbers near zero to zero.
 function clamptol(f::Number; atol=Base.rtoldefault(real(typeof(f))))
     return ifelse(abs(f) < atol, zero(f), f)
 end
-
-clamptol_rec!(f::Number; atol=Base.rtoldefault(real(typeof(f)))) = clamptol(f, atol=atol)
-function clamptol_rec!(a::AbstractArray)
-    a .= clamptol_rec!.(a)
+clamptol!(f::Number; atol=Base.rtoldefault(real(typeof(f)))) = clamptol(f, atol=atol)
+function clamptol!(a::AbstractArray)
+    for (i, x) in pairs(a)
+        a[i] = clamptol!(x)
+    end
+    # a .= clamptol!.(a)
     return a
 end
-
-function clamptol_rec!(
+function clamptol!(
     a::SparseMatrixCSC{T};
     atol=Base.rtoldefault(real(typeof(f)))
 ) where {T<:Number}

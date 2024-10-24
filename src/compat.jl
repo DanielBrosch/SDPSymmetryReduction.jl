@@ -1,5 +1,5 @@
 roundToZero(f::Number) = clamptol(f)
-roundToZero!(a::AbstractArray) = clamptol_rec!(a)
+roundToZero!(a::AbstractArray) = clamptol!(a)
 
 function orthProject(A::AbstractMatrix{T}, v::AbstractVector{T}) where {T}
     return project_colspace(v, A)

@@ -76,9 +76,9 @@ function basis_image(Q::AbstractVector{<:AbstractMatrix}, P::Partition)
     M = spzeros(T, Int, size(P.P))
 
     for i in eachindex(basis_img, C)
-        M = sparse_constraint!(M, C[i], 1.0)
-        basis_img[i] = [conjugate(M, Qi, t) for (Qi, t) in zip(Q, tmp)]
-        clamptol_rec!(basis_img[i])
+        Pi = sparse_constraint!(M, C[i], 1.0)
+        basis_img[i] = [conjugate(Pi, Qi, t) for (Qi, t) in zip(Q, tmp)]
+        clamptol!(basis_img[i])
     end
 
     return basis_img
@@ -92,7 +92,7 @@ function basis_image_thr(Q::AbstractVector{<:AbstractMatrix}, P::Partition)
         M = spzeros(Float64, Int, size(P.P))
         M[C[i]] .= 1
         basis_img[i] = [conjugate(M, Qi) for Qi in Q]
-        clamptol_rec!(basis_img[i])
+        clamptol!(basis_img[i])
     end
     return basis_img
 end
