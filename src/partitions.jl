@@ -62,20 +62,22 @@ randomize!(M::AbstractMatrix, P::Partition) =
     fill!(M::AbstractMatrix, P::Partition; values::AbstractVector)
 Fill matrix `M` with values from `values`, according to partition `P`.
 """
-function Base.fill!(M::AbstractMatrix, P::Partition; values::AbstractVector)
+function Base.fill!(M::AbstractMatrix{<:Real}, P::Partition; values::AbstractVector)
     values[1] = zero(eltype(values))
-    @inbounds if eltype(values) <: Real
-        for idx in eachindex(P.P, M)
-            M[idx] = values[P.P[idx]+1]
-        end
-    else
-        M .= zero(eltype(M))
-        for idx in eachindex(IndexCartesian(), P.P, M)
-            v = values[P.P[idx]+1]
-            t = Tuple(idx)
-            M[t...] += v
-            M[reverse(t)...] += v'
-        end
+    @inbounds for idx in eachindex(P.P, M)
+        M[idx] = values[P.P[idx]+1]
+    end
+    return M
+end
+
+function Base.fill!(M::AbstractMatrix{<:Complex}, P::Partition; values::AbstractVector)
+    values[1] = zero(eltype(values))
+    M .= zero(eltype(M))
+    @inbounds for idx in eachindex(IndexCartesian(), P.P, M)
+        v = values[P.P[idx]+1]
+        t = Tuple(idx)
+        M[t...] += v
+        M[reverse(t)...] += v'
     end
     return M
 end
