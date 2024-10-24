@@ -161,17 +161,13 @@ function irreducible_decomposition(
             Pi[blk, blk] ./= norm(Pi[shift+1, blk]) # recover b_ij
         end
 
-        # Finally we permute the blocks accordingly
-        perm = zeros(Int, size(QKᵢ′AQKᵢ, 2))
-        for i in 1:n_merged_blks
-            for j in idx
-                perm[i+n_merged_blks*(j-1)] = j + eigval_mult * (i - 1)
-            end
+        if dimEi == 1
+            P_hat[P_idx] = QKi * Pi
+        else
+            # select the first column from each block
+            first_columns = 1:dimEi:dimEi*length(Ki)
+            P_hat[P_idx] = QKi * @view Pi[:, first_columns]
         end
-
-        # TODO: compute only the columns of QKi*Pi we actually need
-        M = Base.permutecols!!(QKi * Pi, perm)
-        P_hat[P_idx] = M[:, 1:n_merged_blks]
     end
 
     return P_hat
