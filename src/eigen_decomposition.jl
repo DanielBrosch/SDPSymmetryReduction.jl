@@ -57,6 +57,13 @@ function Base.getindex(QᵀAQ::AbstractArray, es1::EigenSpace, es2::EigenSpace)
     return @view QᵀAQ[range(es1), range(es2)]
 end
 
+function block(A, es1, es2)
+    @assert parent(es1) == parent(es2)
+    Qi = vectors(es1)
+    Qj = vectors(es2)
+    return Qi' * A * Qj
+end
+
 struct InvalidDecompositionField <: Exception
     requested
     found
@@ -135,30 +142,33 @@ function irreducible_decomposition(
     P_hat = Vector{Matrix{T}}(undef, length(roots))
     A = randomize!(A, P)
 
-    for P_idx in eachindex(roots, P_hat)
-        root = roots[P_idx]
-        Ki = findall(==(root), Kpartition)
-        n_merged_blks = length(Ki) # how many eigen-blocks are we merging together?
+    for (P_idx, i) in enumerate(roots)
+        Ki = findall(==(i), Kpartition)
+        @assert first(Ki) == i # below we make this assumption
+        if length(Ki) == 1
+            P_hat[P_idx] = vectors(eigdec[i])[:, 1:1]
+            continue
+        end
         # merge eigenspaces according to partition K
-        QKi = reduce(hcat, [vectors(eigdec[i]) for i in Ki])
+        QKi = reduce(hcat, [vectors(eigdec[i′]) for i′ in Ki])
+        # Pi will be diagonal matrix diag(P₁, P₂, ..., P)  with each block of dimension
+        dimEi = dim(eigdec[i]) # m_i in Murota;
+        Pi = zeros(T, size(QKi, 2), size(QKi, 2))
 
-        QKᵢ′AQKᵢ = QKi' * A * QKi
+        # The aim is to have P_hat = QKi*Pi with P_hat'*A*P_hat ≅ B⊗I
 
-        # Pi will be diagonal matrix diag(P₁, P₂, ..., P)
-        Pi = zeros(T, size(QKᵢ′AQKᵢ))
-
-        # each block is of this dimension
-        eigval_mult = dim(eigdec[root]) # m_i in Murota;
-        @assert eigval_mult * n_merged_blks == size(QKᵢ′AQKᵢ, 1)
-
-        idx = Base.OneTo(eigval_mult)
-        # The aim is to have QKi*P ≅ B⊗I
-        Pi[idx, idx] .= I(eigval_mult)
-        @views for j in 2:n_merged_blks
-            shift = eigval_mult * (j - 1)
-            blk = shift .+ idx
-            Pi[blk, blk] .= inv(QKᵢ′AQKᵢ[idx, blk]) # so that we get identity
-            Pi[blk, blk] ./= norm(Pi[shift+1, blk]) # recover b_ij
+        # P₁ is easy
+        idx = Base.OneTo(dimEi)
+        Pi[idx, idx] .= I(dimEi)
+        # for the rest we need to work
+        Ei = eigdec[i]
+        @views for (n, j) in enumerate(Ki[2:end])
+            Ej = eigdec[j]
+            blk = idx .+ n * dimEi
+            P_blk = view(Pi, blk, blk)
+            P_blk .= inv(block(A, Ei, Ej))
+            # recover B_ij as the norm of the first row
+            P_blk ./= norm(P_blk[1, :])
         end
 
         if dimEi == 1
