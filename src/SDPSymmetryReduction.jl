@@ -4,6 +4,7 @@ using LinearAlgebra
 using Random
 using SparseArrays
 using DataStructures
+import Krylov
 
 export Partition, admPartSubspace, blockDiagonalize, unSymmetrize
 

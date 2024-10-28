@@ -135,7 +135,8 @@ function admissible_subspace(
         reshape(c, n, n)
     end
 
-    X₀Lᵖ = let X = A \ b # we own `X₀`
+    # Krylov.craig is equivalent to A\x
+    X₀Lᵖ = let (X, _) = Krylov.craig(A, b) # we own `X`
         X = _symmetrize!(X, n)
         X = projLᵖ(X)
         X .= clamptol.(round.(X, sigdigits=sigdigits))
