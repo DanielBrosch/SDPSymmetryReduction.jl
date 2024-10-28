@@ -29,7 +29,12 @@ end
 Project v orthogonally to the column space of A.
 """
 function project_colspace(v::AbstractVector, A::AbstractMatrix; Afact=qr(A))
-    return A * (Afact \ v)
+    return project_colspace!(similar(v), v, A; Afact=Afact)
+end
+function project_colspace!(res, v::AbstractVector, A; Afact=qr(A))
+    # return A * (Afact \ v)
+    mul!(res, A, Afact \ v)
+    return res
 end
 
 project_colspace(v::SparseVector, A::AbstractMatrix; Afact=qr(A)) =

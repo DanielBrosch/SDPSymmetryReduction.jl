@@ -120,16 +120,18 @@ function admissible_subspace(
     n = isqrt(length(C))
     @assert n^2 == length(C)
     # temporary values for re-use
+    tmp = Vector{T}(undef, length(C)) # for projection
     X = Matrix{Float64}(undef, n, n)
     X² = Matrix{Float64}(undef, n, n)
 
-    projLᵖ = let A′ = A', A′qr = qr(A′)
-        v -> project_colspace(v, A′, Afact=A′qr)
+    projLᵖ! = let A′ = A', A′qr = qr(A′)
+        # we need a dense vector here even for sparse A
+        (tmp, v::Vector) -> project_colspace!(tmp, v, A′, Afact=A′qr)
     end
 
     # notation according to Brosch
-    CL = let c = C
-        c = c - projLᵖ(c) # we own `c` from now on
+    CL = let c = Vector(C) # we own `c` from now on
+        c .-= projLᵖ!(tmp, c)
         c .= clamptol.(round.(c, sigdigits=sigdigits))
         c = _symmetrize!(c, n)
         reshape(c, n, n)
@@ -138,7 +140,7 @@ function admissible_subspace(
     # Krylov.craig is equivalent to A\x
     X₀Lᵖ = let (X, _) = Krylov.craig(A, b) # we own `X`
         X = _symmetrize!(X, n)
-        X = projLᵖ(X)
+        X = (projLᵖ!(tmp, X); copyto!(X, tmp))
         X .= clamptol.(round.(X, sigdigits=sigdigits))
         reshape(X, n, n)
     end
@@ -160,7 +162,7 @@ function admissible_subspace(
         # Add a random projection to S
         X = randomize!(X, S)
         let x = vec(X) # x in here shares memory with X!
-            x .-= projLᵖ(x)
+            x .-= projLᵖ!(tmp, x)
             x .= clamptol.(round.(x, sigdigits=sigdigits))
         end
         S = refine(S, Partition{I}(X))
