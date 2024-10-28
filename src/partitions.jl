@@ -103,9 +103,9 @@ function admissible_subspace(
     A::AbstractMatrix{T},
     b::AbstractVector{T};
     verbose::Bool=false,
-    rtol=Base.rtoldefault(real(T)),
+    atol=Base.rtoldefault(real(T)),
 ) where {T<:AbstractFloat}
-    return admissible_subspace(UInt16, C, A, b; verbose=verbose, rtol=rtol)
+    return admissible_subspace(UInt16, C, A, b; verbose=verbose, atol=atol)
 end
 
 function admissible_subspace(
@@ -114,9 +114,9 @@ function admissible_subspace(
     A::AbstractMatrix{T},
     b::AbstractVector{T};
     verbose::Bool=false,
-    rtol=Base.rtoldefault(real(T)),
+    atol=Base.rtoldefault(real(T)),
 ) where {I<:Integer,T<:AbstractFloat}
-    sigdigits = ceil(Int, -log10(rtol))
+    sigdigits = ceil(Int, -log10(atol))
     n = isqrt(length(C))
     @assert n^2 == length(C)
     # temporary values for re-use
@@ -132,7 +132,7 @@ function admissible_subspace(
     # notation according to Brosch
     CL = let c = Vector(C) # we own `c` from now on
         c .-= projLᵖ!(tmp, c)
-        c .= clamptol.(round.(c, sigdigits=sigdigits))
+        c = _clamp_round!(c, atol=atol, sigdigits=sigdigits)
         c = _symmetrize!(c, n)
         reshape(c, n, n)
     end
@@ -141,7 +141,7 @@ function admissible_subspace(
     X₀Lᵖ = let (X, _) = Krylov.craig(A, b) # we own `X`
         X = _symmetrize!(X, n)
         X = (projLᵖ!(tmp, X); copyto!(X, tmp))
-        X .= clamptol.(round.(X, sigdigits=sigdigits))
+        X = _clamp_round!(X, atol=atol, sigdigits=sigdigits)
         reshape(X, n, n)
     end
 
@@ -163,7 +163,7 @@ function admissible_subspace(
         X = randomize!(X, S)
         let x = vec(X) # x in here shares memory with X!
             x .-= projLᵖ!(tmp, x)
-            x .= clamptol.(round.(x, sigdigits=sigdigits))
+            x = _clamp_round!(x, sigdigits=sigdigits, atol=atol)
         end
         S = refine(S, Partition{I}(X))
 
@@ -173,7 +173,7 @@ function admissible_subspace(
 
         # Add random square
         X² = mul!(X², X, X)
-        X² .= clamptol.(round.(X², sigdigits=sigdigits))
+        X² = _clamp_round!(X², sigdigits=sigdigits, atol=atol)
 
         S = refine(S, Partition{I}(X²))
 
@@ -198,7 +198,7 @@ end
 
 WL algorithm to "desymmetrize" the Jordan algebra corresponding to `P`.
 """
-function desymmetrize(P::Partition; verbose=false)
+function desymmetrize(P::Partition; verbose=false, atol=Base.rtoldefault(Float64))
     dim = P.n
     it = 0
     M1 = Matrix{Float64}(undef, size(P.P))
@@ -210,7 +210,7 @@ function desymmetrize(P::Partition; verbose=false)
         randomize!(M1, P)
         randomize!(M2, P)
         LinearAlgebra.mul!(M3, M1, M2)
-        M3 .= round.(clamptol.(M3); sigdigits=5)
+        M3 .= _clamp_round!(M3, atol=atol)
         P = refine(P, part(M3))
         # Check if converged
         if dim == P.n

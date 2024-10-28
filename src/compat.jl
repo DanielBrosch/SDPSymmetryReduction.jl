@@ -54,7 +54,7 @@ function blockDiagonalize(
 
     Q_hat = diagonalize(T, P; verbose=verbose, atol=epsilon)
     if T <: Complex
-        P = desymmetrize(P)
+        P = desymmetrize(P; verbose=verbose, atol=epsilon)
     end
 
     # throws DimensionMismatch if appropriate

@@ -24,6 +24,27 @@ function clamptol!(
     return droptol!(a, atol)
 end
 
+function _clamp_round!(
+    A::AbstractArray;
+    atol=Base.rtoldefault(real(eltype(A))),
+    sigdigits=floor(Int, -log10(atol))
+)
+    @inbounds for (i, a) in pairs(A)
+        A[i] = ifelse(
+            abs(a) < atol,
+            zero(a),
+            unsafe_round(a, scale=10^sigdigits)
+        )
+    end
+    return A
+end
+
+function unsafe_round(f::AbstractFloat; scale)
+    (x, n) = frexp(f)
+    y = unsafe_trunc(Int, scale * x) / scale
+    return ldexp(y, n)
+end
+
 """
     project_colspace(v::AbstractVector{T}, A::AbstractMatrix{T}) where T
 Project v orthogonally to the column space of A.
