@@ -43,7 +43,11 @@ project_colspace(v::SparseVector, A::AbstractMatrix; Afact=qr(A)) =
 function _symmetrize!(v::AbstractVector{T}, n::Integer) where {T}
     @assert length(v) == n^2
     M = reshape(v, n, n)
-    M .+= M'
-    M ./= T(2)
+    @inbounds for i in axes(M, 2)
+        for j in i:size(M, 1)
+            t = (M[i, j] + M[j, i]) / 2
+            M[i, j] = M[j, i] = t
+        end
+    end
     return v
 end
