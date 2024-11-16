@@ -78,7 +78,7 @@ function basis_image(Q::AbstractVector{<:AbstractMatrix}, P::Partition)
     for i in eachindex(basis_img, C)
         Pi = sparse_constraint!(M, C[i], 1.0)
         basis_img[i] = [conjugate(Pi, Qi, t) for (Qi, t) in zip(Q, tmp)]
-        clamptol!(basis_img[i])
+        clamptol!.(basis_img[i])
     end
 
     return basis_img
