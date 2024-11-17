@@ -1,17 +1,20 @@
 """
     Partition
 
-A partition subspace. `P.n` is the number of parts, and `P.P` an integer matrix defining the basis elements.
-
-`Partition` stores a partition of `1:n × 1:n in a single matrix
-Entries of P should always be 1,…,n
+A partition subspace stored internally as matrix of integers from `0` to `dim(P)`.
 """
-struct Partition{T<:Integer}
-    n::Int # Number of parts
-    P::Matrix{T} # Matrix with entries 1,...,n
+struct Partition{T<:Integer} <: AbstractPartition
+    nparts::Int # Number of parts
+    matrix::Matrix{T} # Matrix with entries 1,...,n
 end
 
 Partition(args...) = Partition{UInt16}(args...)
+
+dim(p::Partition) = p.nparts
+Base.size(p::Partition, args...) = size(p.matrix, args...)
+
+Base.:(==)(p::Partition, q::Partition) =
+    dim(p) == dim(q) && p.matrix == q.matrix
 
 """
     Partition(M::AbstractMatrix)
@@ -33,39 +36,29 @@ end
 
 function Partition{T}(M::AbstractMatrix{<:Integer}) where {T}
     M_vals = unique(M)
-    @assert 0 ≤ minimum(M_vals)
-    vals = zeros(Int, maximum(M_vals) + 1) # shift by one to accomodate 0
-    for (i, v) in pairs(M_vals)
-        vals[v+1] = i # vals[1] = 0, if present
+    @assert 0 ≤ first(M_vals)
+    vals = zeros(Int, maximum(M_vals) + 1) # to accomodate for 0 if it exists
+    dim = 0
+    for v in M_vals
+        iszero(v) && continue # to preserve 0
+        dim += 1
+        vals[v+1] = dim
     end
     res = zeros(T, size(M))
     for (v, idx) in zip(M, eachindex(res))
         res[idx] = vals[v+1]
     end
-    return Partition{T}(length(M_vals), res)
+    return Partition{T}(dim, res)
 end
 
-function refine(P1::Partition{T}, P2::Partition{S}) where {T,S}
-    TT = promote_type(T, S)
-    M = zeros(TT, size(P1.P))
-    M .= P2.P # we really want to widen BEFORE addition
-    M .+= P1.P .* (P2.n + 1)
-    return Partition{T}(M)
+function refine!(P1::Partition{T}, P2::Partition{S}) where {T,S}
+    P2.matrix .= P1.matrix .+ P2.matrix .* (dim(P1) + 1)
+    return Partition{T}(P2.matrix)
 end
 
-randomize(P::Partition) = randomize(Float64, P)
-randomize(::Type{T}, P::Partition) where {T} = randomize!(Matrix{T}(undef, size(P.P)), P)
-randomize!(M::AbstractMatrix, P::Partition) =
-    fill!(M, P; values=rand(eltype(M), P.n + 1))
-
-"""
-    fill!(M::AbstractMatrix, P::Partition; values::AbstractVector)
-Fill matrix `M` with values from `values`, according to partition `P`.
-"""
 function Base.fill!(M::AbstractMatrix{<:Real}, P::Partition; values::AbstractVector)
-    values[1] = zero(eltype(values))
-    @inbounds for idx in eachindex(P.P, M)
-        M[idx] = values[P.P[idx]+1]
+    for idx in eachindex(P.matrix, M)
+        M[idx] = values[P.matrix[idx]+1]
     end
     return M
 end
@@ -73,8 +66,8 @@ end
 function Base.fill!(M::AbstractMatrix{<:Complex}, P::Partition; values::AbstractVector)
     values[1] = zero(eltype(values))
     M .= zero(eltype(M))
-    @inbounds for idx in eachindex(IndexCartesian(), P.P, M)
-        v = values[P.P[idx]+1]
+    @inbounds for idx in eachindex(IndexCartesian(), P.matrix, M)
+        v = values[P.matrix[idx]+1]
         t = Tuple(idx)
         M[t...] += v
         M[reverse(t)...] += v'
@@ -82,11 +75,25 @@ function Base.fill!(M::AbstractMatrix{<:Complex}, P::Partition; values::Abstract
     return M
 end
 
-"""
-    admissible_subspace(C, A, b[, verbose; rtol])
-Returns the optimal admissible partition subspace for the SD problem
+function admissible_subspace(
+    C::AbstractVector{T},
+    A::AbstractMatrix{T},
+    b::AbstractVector{T};
+    verbose::Bool=false,
+    atol=Base.rtoldefault(real(T)),
+) where {T<:AbstractFloat}
+    return admissible_subspace(Partition{UInt16}, C, A, b; verbose=verbose, atol=atol)
+end
 
-``\\inf\\{C^Tx, Ax = b, \\mathrm{Mat}(x) \\succcurlyeq 0\\}.``
+"""
+    admissible_subspace([Partition{UInt16},] C, A, b[; verbose, atol])
+Return the optimal admissible partition subspace for the semidefinite problem
+
+> ```
+>   minimize: ⟨Cᵀ, x⟩
+> subject to: A·x = b
+>             Mat(x) ⪰ 0
+> ```
 
 The problem can be restricted to the subspace without changing its optimal value.
 
@@ -99,40 +106,28 @@ See Section 5.2 of Permenter thesis.
 * A `Partition` subspace `P`.
 """
 function admissible_subspace(
+    ::Type{Part},
     C::AbstractVector{T},
     A::AbstractMatrix{T},
     b::AbstractVector{T};
     verbose::Bool=false,
     atol=Base.rtoldefault(real(T)),
-) where {T<:AbstractFloat}
-    return admissible_subspace(UInt16, C, A, b; verbose=verbose, atol=atol)
-end
-
-function admissible_subspace(
-    ::Type{I},
-    C::AbstractVector{T},
-    A::AbstractMatrix{T},
-    b::AbstractVector{T};
-    verbose::Bool=false,
-    atol=Base.rtoldefault(real(T)),
-) where {I<:Integer,T<:AbstractFloat}
-    sigdigits = ceil(Int, -log10(atol))
+) where {Part<:AbstractPartition,T<:AbstractFloat}
     n = isqrt(length(C))
     @assert n^2 == length(C)
     # temporary values for re-use
-    tmp = Vector{T}(undef, length(C)) # for projection
+    tmp = Vector{T}(undef, length(C))
     X = Matrix{Float64}(undef, n, n)
     X² = Matrix{Float64}(undef, n, n)
 
     projLᵖ! = let A′ = A', A′qr = qr(A′)
-        # we need a dense vector here even for sparse A
-        (tmp, v::Vector) -> project_colspace!(tmp, v, A′, Afact=A′qr)
+        (tmp, v) -> project_colspace!(tmp, v, A′, Afact=A′qr)
     end
 
     # notation according to Brosch
     CL = let c = Vector(C) # we own `c` from now on
         c .-= projLᵖ!(tmp, c)
-        c = _clamp_round!(c, atol=atol, sigdigits=sigdigits)
+        c = _clamp_round!(c, atol=atol)
         c = _symmetrize!(c, n)
         reshape(c, n, n)
     end
@@ -140,85 +135,86 @@ function admissible_subspace(
     # Krylov.craig is equivalent to A\x
     X₀Lᵖ = let (X, _) = Krylov.craig(A, b) # we own `X`
         X = _symmetrize!(X, n)
-        X = (projLᵖ!(tmp, X); copyto!(X, tmp))
-        X = _clamp_round!(X, atol=atol, sigdigits=sigdigits)
+        X = (tmp = projLᵖ!(tmp, X); copyto!(X, tmp))
+        X = _clamp_round!(X, atol=atol)
         reshape(X, n, n)
     end
 
     # Initialize S as the span of the initial two elements
-    S = Partition{I}(CL)
-    S = refine(S, Partition{I}(X₀Lᵖ))
+    S = Part(CL)
+    S = refine!(S, Part(X₀Lᵖ))
 
     maximal_dimension = (n^2 + n) ÷ 2
-    current_dimension = S.n
-    verbose && @info "Starting the reduction. Dimensions:" maximal = maximal_dimension initial = current_dimension
+    current_dimension = initial = dim(S)
+    verbose && @info "Starting the reduction. Dimensions:" maximal = maximal_dimension initial = dim(S)
 
     it = 0
     # Iterate until converged
     while current_dimension < maximal_dimension
         it += 1
-        verbose && @info "Iteration $it, Current dimension: $current_dimension"
+        verbose && @debug "Iteration $it, Current dimension: $current_dimension"
 
         # Add a random projection to S
         X = randomize!(X, S)
         let x = vec(X) # x in here shares memory with X!
             x .-= projLᵖ!(tmp, x)
-            x = _clamp_round!(x, sigdigits=sigdigits, atol=atol)
+            x = _clamp_round!(x, atol=atol)
         end
-        S = refine(S, Partition{I}(X))
+        S = refine!(S, Part(X))
 
-        if current_dimension != S.n
+        if current_dimension != dim(S)
             X = randomize!(X, S)
         end
 
+
         # Add random square
         X² = mul!(X², X, X)
-        X² = _clamp_round!(X², sigdigits=sigdigits, atol=atol)
-
-        S = refine(S, Partition{I}(X²))
+        X² = _clamp_round!(X², atol=atol)
+        S = refine!(S, Part(X²))
 
         # with probability 1 a random square does not refine S
         # only when S is already closed under taking squares,
         # i.e. it a Jordan subalgebra, at least for special ones.
         # See Theorem 5.2.3 in Permenter thesis
-        if current_dimension == S.n # converged
+        if current_dimension == dim(S) # converged
             break
         end
 
-        current_dimension = S.n
+        current_dimension = dim(S)
     end
 
     verbose &&
-        @info "Minimal admissible subspace converged in $it iterations. Dimensions:" initial = maximal_dimension final = S.n
+        @info "Minimal admissible subspace converged in $it iterations at dimension:" final = dim(S)
     return S
 end
 
 """
-    desymmetrize(P::Partition)
+    desymmetrize(P::AbstractPartition[; verbose, atol])
 
 WL algorithm to "desymmetrize" the Jordan algebra corresponding to `P`.
 """
-function desymmetrize(P::Partition; verbose=false, atol=Base.rtoldefault(Float64))
-    dim = P.n
+function desymmetrize(P::AbstractPartition; verbose=false, atol=Base.rtoldefault(Float64))
+    # preallocate
+    X = Matrix{Float64}(undef, size(P))
+    Y = Matrix{Float64}(undef, size(P))
+    XY = Matrix{Float64}(undef, size(P))
+
+    current_dim = dim(P)
     it = 0
-    M1 = Matrix{Float64}(undef, size(P.P))
-    M2 = Matrix{Float64}(undef, size(P.P))
-    M3 = Matrix{Float64}(undef, size(P.P))
     # Iterate until converged
     while true
         it += 1
-        randomize!(M1, P)
-        randomize!(M2, P)
-        LinearAlgebra.mul!(M3, M1, M2)
-        M3 .= _clamp_round!(M3, atol=atol)
-        P = refine(P, part(M3))
+        randomize!(X, P)
+        randomize!(Y, P)
+        LinearAlgebra.mul!(XY, X, Y)
+        XY = _clamp_round!(XY, atol=atol)
+        P = refine!(P, typeof(P)(XY))
         # Check if converged
-        if dim == P.n
+        if current_dim == dim(P)
             break
         end
-        dim = P.n
+        current_dim = dim(P)
     end
-    verbose && @info "unsymmetization converged in $it iterations"
+    verbose && @info "desymmetization converged in $it iterations"
     return P
 end
-

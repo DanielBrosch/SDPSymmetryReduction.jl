@@ -15,13 +15,13 @@ end
 
     A, B = read_qapdata(esc16_file, Float64)
     CAb = QuadraticAssignment(A, B)
-    P = admPartSubspace(CAb..., true)
-    @test P.n == 150
+    P = SDPSymmetryReduction.admissible_subspace(CAb..., verbose=true)
+    @test SDPSymmetryReduction.dim(P) == 150
 
-    blkD = blockDiagonalize(P, true)
-    @test sort(blkD.blkSizes) == [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7, 7, 7, 7, 7]
+    Q_hat = SDPSymmetryReduction.diagonalize(Float64, P, verbose=true)
+    @test sort(size.(Q_hat, 2)) == [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7, 7, 7, 7, 7]
 
-    model = opt_model(P, blkD, CAb)
+    model = opt_model(P, Q_hat, CAb)
     JuMP.set_optimizer(model, CSDP.Optimizer)
     JuMP.set_silent(model)
     JuMP.optimize!(model)

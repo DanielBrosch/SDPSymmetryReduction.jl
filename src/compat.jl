@@ -6,7 +6,7 @@ function orthProject(A::AbstractMatrix{T}, v::AbstractVector{T}) where {T}
 end
 
 part(M) = Partition(M)
-coarsestPart(P, Q) = refine(P, Q)
+coarsestPart(P, Q) = refine!(P, deepcopy(Q))
 rndPart(P) = randomize(Float64, P)
 
 roundMat(M) = M .= clamptol.(round.(M, sigdigits=5))
@@ -54,6 +54,7 @@ function blockDiagonalize(
 
     Q_hat = diagonalize(T, P; verbose=verbose, atol=epsilon)
     if T <: Complex
+        # diagonalize desymmetrizes internally, so we need to mirror this
         P = desymmetrize(P; verbose=verbose, atol=epsilon)
     end
 

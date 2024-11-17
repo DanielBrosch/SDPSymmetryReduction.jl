@@ -6,17 +6,25 @@ import CSDP
 
 @testset "SDPSymmetryReduction.jl" begin
 
+    dim = SDPSymmetryReduction.dim
+
     @test iszero(SDPSymmetryReduction.roundToZero(1e-10))
 
     M = rand(1:10, 10, 10)
-    @test SDPSymmetryReduction.part(M).n == length(unique(M))
+    M[1] = 0
+    @test dim(SDPSymmetryReduction.part(M)) == length(unique(M)) - 1
+    @test dim(SDPSymmetryReduction.part(Float64.(M))) == length(unique(M)) - 1
 
-    P1 = Partition(3, [1 2 2; 2 3 3; 2 3 3])
-    P2 = Partition(3, [1 1 2; 1 1 2; 1 1 3])
-    P3 = Partition(6, [1 2 4; 2 3 5; 2 3 6])
-    @test SDPSymmetryReduction.coarsestPart(P1, P2).P == P3.P
+    M = rand(1:10, 10, 10)
+    @test dim(SDPSymmetryReduction.part(M)) == length(unique(M))
+    @test dim(SDPSymmetryReduction.part(Float64.(M))) == length(unique(M))
 
-    @test SDPSymmetryReduction.part(SDPSymmetryReduction.rndPart(P1)).P == P1.P
+    P1 = Partition([1 2 2; 2 3 3; 2 3 3])
+    P2 = Partition([1 1 2; 1 1 2; 1 1 3])
+    P3 = Partition([1 2 4; 2 3 5; 2 3 6])
+    @test SDPSymmetryReduction.coarsestPart(P1, P2) == P3
+
+    @test SDPSymmetryReduction.part(SDPSymmetryReduction.rndPart(P1)) == P1
 
     M = rand(10, 10)
     @test SDPSymmetryReduction.roundMat(M) ≈ M atol = 1e-4
@@ -29,7 +37,7 @@ import CSDP
     @test all(isapprox.(A * (A \ vec(T)) - vec(T), 0, atol=1e-8))
 
     @testset "unsymmetization and complex" begin
-        @test SDPSymmetryReduction.unSymmetrize(P1).P == Partition(4, [1 3 3; 2 4 4; 2 4 4]).P
+        @test SDPSymmetryReduction.unSymmetrize(P1) == Partition(4, [1 3 3; 2 4 4; 2 4 4])
 
         # complex block diagonalization tests
         P = Partition(4, [1 2 3 2; 2 1 2 3; 3 2 1 2; 2 3 2 1])
@@ -42,4 +50,7 @@ import CSDP
     include("sd_problems.jl")
     include("lovasz.jl")
     include("qap.jl")
+
+    include("partitions_set.jl")
+
 end

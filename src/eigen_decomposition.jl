@@ -78,7 +78,7 @@ Base.showerror(io::IO, e::InvalidDecompositionField) =
 
 # Murota et. al., Algorithm 4.1
 function eigen_decomposition(
-    P::Partition,
+    P::AbstractPartition,
     A::AbstractMatrix{T};
     atol=1e-12 * size(A, 1)
 ) where {T}
@@ -111,11 +111,10 @@ function eigen_decomposition(
             in_same_set(K, i, j) && continue
             Ei, Ej = ED[i], ED[j]
             dim(Ei) != dim(Ej) && continue
-            # TODO: numerical condition for non-zero block
             # if the maximal element not small relative to 1.0...
             if any(x -> abs(x) ≥ atol, Q′AQ[Ei, Ej])
                 # Wedderburn-Artin decomposition:
-                # since Q′AQ[esi, esj] : esj → esi is non-zero, it must be
+                # since Q′AQ[Ei, Ej] : Ei → Ej is non-zero, it must be
                 # an isomorphism, so we merge
                 union!(K, i, j)
             end
@@ -132,8 +131,8 @@ end
 function irreducible_decomposition(
     eigdec::EigenDecomposition,
     K::IntDisjointSets,
-    P::Partition,
-    A::AbstractMatrix=Matrix{eltype(eigdec)}(undef, size(P.P)),
+    P::AbstractPartition,
+    A::AbstractMatrix=Matrix{eltype(eigdec)}(undef, size(P)),
 )
     Kpartition = [find_root!(K, i) for i in Base.OneTo(length(K))]
     T = eltype(eigdec)

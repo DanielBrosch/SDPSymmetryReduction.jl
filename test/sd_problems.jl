@@ -26,26 +26,29 @@ function Lovászϑ′_ER_graph(q::Integer)
     return Lovászϑ′(C, A, b)
 end
 
-function opt_model(P, blkD, CAb::Lovászϑ′)
-    PMat = hcat([sparse(vec(P.P .== i)) for i = 1:P.n]...)
-    newA = CAb.A * PMat
-    newB = CAb.b
-    newC = CAb.C' * PMat
+function opt_model(P, Q_hat, CAb::Lovászϑ′)
+    d = SDPSymmetryReduction.dim(P)
+    N = prod(size(P))
+    cnstrs = SDPSymmetryReduction._constraints(P)
+    PMat = hcat([(v = falses(N); v[c] .= true; v) for c in cnstrs]...)
+    # PMat = hcat([sparse(vec(P.matrix .== i)) for i = 1:d]...)
+    A = CAb.A * PMat
+    B = CAb.b
+    C = CAb.C' * PMat
 
     m = JuMP.Model()
-
     # Initialize variables corresponding parts of the partition P
     # >= 0 because the original SDP-matrices are entry-wise nonnegative
-    x = JuMP.@variable(m, x[1:P.n] >= 0)
+    x = JuMP.@variable(m, x[1:d] >= 0)
+    JuMP.@objective(m, Max, C * x)
+    JuMP.@constraint(m, A * x .== B)
 
-    JuMP.@constraint(m, newA * x .== newB)
-    JuMP.@objective(m, Max, newC * x)
-
-    blocks = MutableArithmetics.@rewrite sum(
-        blkD.blks[i] .* x[i] for i = 1:P.n
+    blks = SDPSymmetryReduction.basis_image(Q_hat, P)
+    psd = MutableArithmetics.@rewrite sum(
+        blks[i] .* x[i] for i = 1:d
     )
-    for blk in blocks
-        JuMP.@constraint(m, blk in JuMP.PSDCone())
+    for p in psd
+        JuMP.@constraint(m, p in JuMP.PSDCone())
     end
 
     return m
@@ -101,13 +104,14 @@ function QuadraticAssignment(flowA::AbstractMatrix{T}, flowB::AbstractMatrix{T})
     QuadraticAssignment(sparse(vec(C)), A, b)
 end
 
-function opt_model(P, blkD, CAb::QuadraticAssignment)
+function opt_model(P, Q_hat, CAb::QuadraticAssignment)
+    d = SDPSymmetryReduction.dim(P)
+    N = length(CAb.C)
     n = isqrt(isqrt(length(CAb.C)))
-    @assert n^4 == length(CAb.C)
-    PMat = spzeros(Bool, n^4, P.n)
-    for c in eachindex(P.P)
-        PMat[c, P.P[c]] = 1
-    end
+    @assert n^4 == N
+
+    cnstrs = SDPSymmetryReduction._constraints(P)
+    PMat = hcat([(v = falses(n^4); v[c] .= true; v) for c in cnstrs]...)
 
     C = CAb.C' * PMat
     A = CAb.A * PMat
@@ -117,13 +121,16 @@ function opt_model(P, blkD, CAb::QuadraticAssignment)
 
     # Initialize variables corresponding parts of the partition P
     # >= 0 because the original SDP-matrices are entry-wise nonnegative
-    x = JuMP.@variable(m, x[1:P.n] >= 0)
+    x = JuMP.@variable(m, x[1:d] >= 0)
     JuMP.@objective(m, Min, C * x)
     JuMP.@constraint(m, A * x == b)
-    blocks = MutableArithmetics.@rewrite(sum(x[i] * blkD.blks[i] for i = 1:P.n))
+    blks = SDPSymmetryReduction.basis_image(Q_hat, P)
+    psd = MutableArithmetics.@rewrite(
+        sum(x[i] * blks[i] for i = 1:d)
+    )
 
-    for blk in blocks
-        JuMP.@constraint(m, blk in JuMP.PSDCone())
+    for p in psd
+        JuMP.@constraint(m, p in JuMP.PSDCone())
     end
 
     return m
