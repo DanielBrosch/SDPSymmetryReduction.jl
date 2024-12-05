@@ -146,7 +146,7 @@ function admissible_subspace(
 
     maximal_dimension = (n^2 + n) ÷ 2
     current_dimension = initial = dim(S)
-    verbose && @info "Starting the reduction. Dimensions:" maximal = maximal_dimension initial = dim(S)
+    verbose && @info "Starting the reduction. Dimensions:" maximal = maximal_dimension initial = initial
 
     it = 0
     # Iterate until converged
