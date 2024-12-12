@@ -52,5 +52,6 @@ import CSDP
     include("qap.jl")
 
     include("partitions_set.jl")
+    include("partitions_in_place.jl")
 
 end
