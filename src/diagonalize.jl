@@ -64,7 +64,7 @@ end
 function basis_image(
     Q::AbstractVector{<:AbstractMatrix},
     P::AbstractPartition;
-    atol=atol = 1e-12 * size(P, 1),
+    atol=1e-12 * size(P, 1),
 )
     T = eltype(first(Q))
     basis_img = Vector{Vector{Matrix{T}}}(undef, dim(P))
@@ -91,7 +91,7 @@ end
 function basis_image_thr(
     Q::AbstractVector{<:AbstractMatrix},
     P::AbstractPartition;
-    atol=atol = 1e-12 * size(P, 1),
+    atol=1e-12 * size(P, 1),
 )
     T = eltype(first(Q))
     basis_img = Vector{Vector{Matrix{T}}}(undef, dim(P))
