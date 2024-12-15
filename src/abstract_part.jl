@@ -53,7 +53,7 @@ function dim end
     fill!(M::AbstractMatrix, p::AbstractPartition; values)
 Fill `M` with `values` according to partition `p`.
 
-Typically `values[1] == 0` to preserve the `0`-set.
+The fill will to preserve the `0`-set.
 
 # Examples
 ```julia
@@ -63,7 +63,7 @@ julia> q = SR.Partition(Float64[
            0 3 3
        ]);
 
-julia> fill!(zeros(3,3), q, values=[0, -1, sqrt(2), π])
+julia> fill!(zeros(3,3), q, values=[-1, sqrt(2), π])
 3×3 Matrix{Float64}:
  -1.0  -1.0      0.0
  -1.0   0.0      3.14159
@@ -76,11 +76,11 @@ function Base.fill!(M::AbstractMatrix, ap::AbstractPartition; values::AbstractVe
     randomize([T=Float64, ]P::AbstractPartition)
 Return a `Matrix{T}` filled with random values according to partition subspace `P`.
 
-`0`-set of `P` will be mapped to `0`.
+`0`-set of `P` will be mapped to `zero(T)`.
 
 # Examples
 ```julia
-julia> q = SR.Partition(Float64[
+julia> q = SR.Partition([
            1 1 0;
            1 0 5;
            0 3 3
@@ -105,8 +105,7 @@ Randomize `M` in-place according to partition subspace `P`.
 See also [`fill!(::AbstractMatrix, ::AbstractPartition)`](@ref Base.fill!(::AbstractMatrix, ::AbstractPartition)).
 """
 function randomize!(M::AbstractMatrix, P::AbstractPartition)
-    values = rand(eltype(M), dim(P) + 1)
-    values[1] = zero(values[1])
+    values = rand(eltype(M), dim(P))
     return fill!(M, P; values=values)
 end
 

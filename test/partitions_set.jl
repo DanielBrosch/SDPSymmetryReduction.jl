@@ -67,10 +67,11 @@ function SR.refine!(P₁::Partition{S}, P₂::Partition) where {S}
 end
 
 function Base.fill!(M::AbstractMatrix{<:Real}, P::Partition; values::AbstractVector)
+    @assert length(values) == length(P.sets)
     @inbounds for i in P.zero_set
-        M[i] = first(values)
+        M[i] = zero(eltype(M))
     end
-    @inbounds for (S, v) in zip(P.sets, @view values[2:end])
+    @inbounds for (S, v) in zip(P.sets, values)
         for i in S
             M[i] = v
         end

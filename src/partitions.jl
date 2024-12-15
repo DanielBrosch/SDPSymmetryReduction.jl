@@ -75,21 +75,11 @@ function refine!(P1::Partition{T}, P2::Partition{S}) where {T,S}
     return P1
 end
 
-function Base.fill!(M::AbstractMatrix{<:Real}, P::Partition; values::AbstractVector)
+function Base.fill!(M::AbstractMatrix, P::Partition; values::AbstractVector)
+    @assert length(values) == dim(P)
     for idx in eachindex(P.matrix, M)
-        M[idx] = values[P.matrix[idx]+1]
-    end
-    return M
-end
-
-function Base.fill!(M::AbstractMatrix{<:Complex}, P::Partition; values::AbstractVector)
-    values[1] = zero(eltype(values))
-    M .= zero(eltype(M))
-    @inbounds for idx in eachindex(IndexCartesian(), P.matrix, M)
-        v = values[P.matrix[idx]+1]
-        t = Tuple(idx)
-        M[t...] += v
-        M[reverse(t)...] += v'
+        k = P.matrix[idx]
+        M[idx] = iszero(k) ? zero(eltype(M)) : values[k]
     end
     return M
 end
