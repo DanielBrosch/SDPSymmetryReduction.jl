@@ -112,12 +112,7 @@ end
 
 """
     refine!(p::AP, q::AP) where AP<:AbstractPartition
-Find the coarsest common refinement of partitions `p` and `q`.
-
-!!! warn
-    The function is destructive i.e. the value of `q` is **undefined**
-    after the call. `p` may or may not be modified in-place.
-    Only the return value is guaranteed to be a valid partition.
+Find the coarsest common refinement of partitions `p` and `q` modifying `p` in-place.
 """
 function refine! end
 

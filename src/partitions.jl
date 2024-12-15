@@ -3,7 +3,7 @@
 
 A partition subspace stored internally as matrix of integers from `0` to `dim(P)`.
 """
-struct Partition{T<:Integer} <: AbstractPartition
+mutable struct Partition{T<:Integer} <: AbstractPartition
     nparts::Int # Number of parts
     matrix::Matrix{T} # Matrix with entries 1,...,n
 end
@@ -51,9 +51,28 @@ function Partition{T}(M::AbstractMatrix{<:Integer}) where {T}
     return Partition{T}(dim, res)
 end
 
+function __sort_unique!(P::Partition)
+    M_vals = unique(P.matrix)
+    @assert 0 ≤ first(M_vals)
+    # vals = Dict{Int, Int}(1 => 0) # doesn't seem worth it, even with gaps
+    vals = zeros(Int, maximum(M_vals) + 1) # to accomodate for 0 if it exists
+    dim = 0
+    for v in M_vals
+        iszero(v) && continue # to preserve 0
+        dim += 1
+        vals[v+1] = dim
+    end
+    for (idx, v) in pairs(P.matrix)
+        P.matrix[idx] = vals[v+1]
+    end
+    P.nparts = dim
+    return P
+end
+
 function refine!(P1::Partition{T}, P2::Partition{S}) where {T,S}
-    P2.matrix .= P1.matrix .+ P2.matrix .* (dim(P1) + 1)
-    return Partition{T}(P2.matrix)
+    P1.matrix .+= P2.matrix .* (dim(P1) + 1)
+    P1 = __sort_unique!(P1)
+    return P1
 end
 
 function Base.fill!(M::AbstractMatrix{<:Real}, P::Partition; values::AbstractVector)
