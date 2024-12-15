@@ -8,7 +8,7 @@ struct Partition{T<:Integer} <: AbstractPartition
     matrix::Matrix{T} # Matrix with entries 1,...,n
 end
 
-Partition(args...) = Partition{UInt16}(args...)
+Partition(args...) = Partition{UInt32}(args...)
 
 dim(p::Partition) = p.nparts
 Base.size(p::Partition, args...) = size(p.matrix, args...)
