@@ -51,13 +51,19 @@ Base.getindex(ed::EigenDecomposition, i::Integer) = EigenSpace(ed, ed.ptrs[i]:ed
 Base.length(ed::EigenDecomposition) = length(ed.ptrs) - 1
 vectors(ed::EigenDecomposition) = ed.vectors
 
-function Base.getindex(QᵀAQ::AbstractArray, es1::EigenSpace, es2::EigenSpace)
+function Base.getindex(QᵀAQ::AbstractMatrix, es1::EigenSpace, es2::EigenSpace)
+    @assert parent(es1) == parent(es2)
+    @assert size(QᵀAQ) == size(parent(es1).vectors)
+    return QᵀAQ[range(es1), range(es2)]
+end
+
+function Base.view(QᵀAQ::AbstractMatrix, es1::EigenSpace, es2::EigenSpace)
     @assert parent(es1) == parent(es2)
     @assert size(QᵀAQ) == size(parent(es1).vectors)
     return @view QᵀAQ[range(es1), range(es2)]
 end
 
-function block(A, es1, es2)
+function block(A::AbstractMatrix, es1::EigenSpace, es2::EigenSpace)
     @assert parent(es1) == parent(es2)
     Qi = vectors(es1)
     Qj = vectors(es2)
@@ -76,7 +82,38 @@ Base.showerror(io::IO, e::InvalidDecompositionField) =
         Consider calling `diagonalize` with $(e.found) as its first argument."""
     )
 
-# Murota et. al., Algorithm 4.1
+struct NumericalInconsistency <: Exception
+    fn
+    msg
+end
+
+Base.showerror(io::IO, e::NumericalInconsistency) =
+    print(
+        io,
+        """Numerical inconsistency in $(e.fn):\n$(e.msg)"""
+    )
+
+function __isconsistent(K)
+    Kpartition = [find_root!(K, i) for i in Base.OneTo(length(K))]
+    roots = unique(Kpartition)
+    return all(r == findfirst(==(r), Kpartition) for r in roots)
+end
+
+"""
+    eigen_decomposition(P::AbstractPartition, A::AbstractMatrix; atol=1e-12*size(A,1))
+Find eigenspace decomposition of partition subspace `P` by inspecting a generic element thereof.
+
+Returns `(ed::EigenDecomposition, K)` where `K` is a partition of eigen-spaces
+of `ed` into isomorphism classes. If the computed `K` is suspected to be
+inconsistent with `ed` (e.g. transitivity fails because of lack of precision)
+`NumericalInconsistency` exception will be thrown.
+
+Follows **Algorithm 4.1** of
+> K. Murota et. al. A Numerical Algorithm for Block-Diagonal Decomposition of Matrix *-Algebras, Part I:
+> Proposed Approach and Application to Semidefinite Programming
+> _Japan Journal of Industrial and Applied Mathematics_, June 2010
+> DOI: 10.1007/s13160-010-0006-9
+"""
 function eigen_decomposition(
     P::AbstractPartition,
     A::AbstractMatrix{T};
@@ -95,7 +132,7 @@ function eigen_decomposition(
     catch
         throw(InvalidDecompositionField(T, eltype(F)))
     end
-    ED = EigenDecomposition(vals, Q; atol=atol)
+    eigdec = EigenDecomposition(vals, Q; atol=atol)
 
     # Step 3
     # in case of Jordan algebras all Aₚ have disjoint support
@@ -104,24 +141,30 @@ function eigen_decomposition(
     Q′AQ = Q' * A * Q
 
     # compute the equivalence relation K (eq. 4.2)
-    neigspaces = length(ED)
+    neigspaces = length(eigdec)
     K = IntDisjointSets(neigspaces) # tracks the merging of eigenspaces
     for i in 1:neigspaces
         for j in (i+1):neigspaces
             in_same_set(K, i, j) && continue
-            Ei, Ej = ED[i], ED[j]
+            Ei, Ej = eigdec[i], eigdec[j]
             dim(Ei) != dim(Ej) && continue
-            # if the maximal element not small relative to 1.0...
-            if any(x -> abs(x) ≥ atol, Q′AQ[Ei, Ej])
-                # Wedderburn-Artin decomposition:
-                # since Q′AQ[Ei, Ej] : Ei → Ej is non-zero, it must be
-                # an isomorphism, so we merge
+            if any(x -> abs(x) ≥ atol, @view Q′AQ[Ei, Ej])
+                # since endomorphism Q′AQ[Ei, Ej] : Ei → Ej is non-zero
+                # it must be an isomorphism, so we merge
                 union!(K, i, j)
             end
         end
     end
 
-    return ED, K
+    if !__isconsistent(K)
+        throw(
+            NumericalInconsistency("eigen_decomposition",
+                "the K-partition seems inconsistent with eigenspaces. Decrease `atol`, or simply try again."
+            )
+        )
+    end
+
+    return eigdec, K
 end
 
 # Murota et. al.
