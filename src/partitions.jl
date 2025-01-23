@@ -208,6 +208,8 @@ function desymmetrize(P::AbstractPartition; verbose=false, atol=Base.rtoldefault
     Y = Matrix{Float64}(undef, size(P))
     XY = Matrix{Float64}(undef, size(P))
 
+    P = deepcopy(P)
+
     current_dim = dim(P)
     it = 0
     # Iterate until converged
