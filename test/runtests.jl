@@ -40,7 +40,13 @@ import CSDP
         @test SDPSymmetryReduction.unSymmetrize(P1) == Partition(4, [1 3 3; 2 4 4; 2 4 4])
 
         # complex block diagonalization tests
-        P = Partition(4, [1 2 3 2; 2 1 2 3; 3 2 1 2; 2 3 2 1])
+        P = Partition(3, [1 2 3 2; 2 1 2 3; 3 2 1 2; 2 3 2 1])
+
+        values = rand(ComplexF64, 3)
+        M = similar(P.matrix, ComplexF64)
+        fill!(M, P, values=values)
+        @test ishermitian(M)
+
         @test blockDiagonalize(P, true; complex=true).blkSizes == [1, 1, 1]
 
         @test_throws DimensionMismatch blockDiagonalize(P, true; complex=false)
