@@ -79,7 +79,7 @@ function Base.fill!(M::AbstractMatrix, P::Partition; values::AbstractVector)
     @assert length(values) == dim(P)
     for idx in eachindex(P.matrix, M)
         k = P.matrix[idx]
-        M[idx] = ifelse(iszero(k), zero(eltype(M)), values[k])
+        M[idx] = iszero(k) ? zero(eltype(M)) : values[k]
     end
     return M
 end
