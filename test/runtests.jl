@@ -42,15 +42,20 @@ import CSDP
         # complex block diagonalization tests
         P = Partition(3, [1 2 3 2; 2 1 2 3; 3 2 1 2; 2 3 2 1])
 
-        values = rand(ComplexF64, 3)
-        M = similar(P.matrix, ComplexF64)
-        fill!(M, P, values=values)
-        @test ishermitian(M)
+        @test issymmetric(SDPSymmetryReduction.randomize(P))
 
         @test blockDiagonalize(P, true; complex=true).blkSizes == [1, 1, 1]
 
-        @test_throws DimensionMismatch blockDiagonalize(P, true; complex=false)
-
+        # cyclic group of order 3:
+        C₃ = [
+            1 2 3
+            2 3 1
+            3 1 2
+        ]
+        C₃ = reverse(C₃, dims=1)
+        P₃ = Partition(C₃)
+        @test_throws SDPSymmetryReduction.InvalidDecompositionField blockDiagonalize(P₃)
+        @test blockDiagonalize(P₃, complex=true).blkSizes == [1, 1, 1]
     end
 
     include("sd_problems.jl")

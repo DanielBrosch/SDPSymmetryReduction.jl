@@ -79,7 +79,7 @@ function Base.fill!(M::AbstractMatrix, P::Partition; values::AbstractVector)
     @assert length(values) == dim(P)
     for idx in eachindex(P.matrix, M)
         k = P.matrix[idx]
-        M[idx] = iszero(k) ? zero(eltype(M)) : values[k]
+        M[idx] = ifelse(iszero(k), zero(eltype(M)), values[k])
     end
     return M
 end
@@ -103,6 +103,8 @@ Return the optimal admissible partition subspace for the semidefinite problem
 > subject to: A·x = b
 >             Mat(x) ⪰ 0
 > ```
+
+where `C` and `A` are symmetric.
 
 The problem can be restricted to the subspace without changing its optimal value.
 
