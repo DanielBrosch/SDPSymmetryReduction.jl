@@ -20,9 +20,7 @@ function projectAndRound(M, A; round=true)
     return Float64.(reshape(v, size(M)...))
 end
 
-function admPartSubspace(C, A, b, verbose=false)
-    return admissible_subspace(C, A, b; verbose=verbose)
-end
+@deprecate admPartSubspace(C, A, b, verbose=false) admissible_subspace(C, A, b; verbose=verbose)
 
 # move the type unstability to this function, also avoid breaking the old syntax
 function blockDiagonalize(P, verbose=true; epsilon=Base.rtoldefault(Float64), complex=false)
@@ -43,7 +41,7 @@ Determines a block-diagonalization of a (Jordan)-algebra given by a partition `P
 ## Output
 
 * `blkd.blkSizes` is an integer array of the sizes of the blocks.
-* `blkd.blks` is an array of length `P.n` containing arrays of (real/complex) matrices of sizes `blkd.blkSizes`. I.e. `blkd.blks[i]` is the image of the basis element `P.P .== i`.
+* `blkd.blks` is an array of length `dim(P)` containing arrays of (real/complex) matrices of sizes `blkd.blkSizes`. I.e. `blkd.blks[i]` is the image of the basis element `P.matrix .== i`.
 """
 function blockDiagonalize(
     ::Type{T},

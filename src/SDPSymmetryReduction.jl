@@ -6,7 +6,8 @@ using SparseArrays
 using DataStructures
 import Krylov
 
-export Partition, admPartSubspace, blockDiagonalize, unSymmetrize
+export Partition, admPartSubspace, admissible_subspace, blockDiagonalize, unSymmetrize, dim
+
 
 include("utils.jl")
 include("compat.jl")

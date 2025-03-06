@@ -12,8 +12,8 @@
 using LinearAlgebra #hide
 q = 7
 PG2q = vcat([[0, 0, 1]],
-[[0, 1, b] for b = 0:q-1],
-[[1, a, b] for a = 0:q-1 for b = 0:q-1])
+    [[0, 1, b] for b = 0:q-1],
+    [[1, a, b] for a = 0:q-1 for b = 0:q-1])
 Adj = [x' * y % q == 0 && x != y for x in PG2q, y in PG2q]
 size(Adj)
 
@@ -43,27 +43,27 @@ b = [0.0, 1.0];
 # First, we need to determine an (optimal) admissible subspace.
 
 using SDPSymmetryReduction
-P = admPartSubspace(C, A, b, true)
-P.n
+P = admissible_subspace(C, A, b; verbose=true)
+dim(P)
 
 using Test #src 
-@test P.n == 18 #src
+@test dim(P) == 18 #src
 
-# Running `admPartSubspace` returns a `Partition` object. `P.n` are the number of orbits (and thus
-# variables), and `P.P` is a matrix with integer values from `1` trough `P.n`. Here, `P.P` looks like this
+# Running `admissible_subspace` returns a `Partition` object. `dim(P)` are the number of orbits (and thus
+# variables), and `P.matrix` is a matrix with integer values from `1` trough `dim(P)`. Here, `P.matrix` looks like this
 # (different color shades = different orbits): 
 
-heatmap(reverse(P.P, dims=1)) #hide
+heatmap(reverse(P.matrix, dims=1)) #hide
 
 # Now we can block-diagonalize the algebra (numerically)
 blkD = blockDiagonalize(P, true);
-@test sort(blkD.blkSizes) == [2,2,2,2,3] #src
+@test sort(blkD.blkSizes) == [2, 2, 2, 2, 3] #src
 
 # ## Building the reduced SDP
-# Since `blkD.blks[i]` is the block-diagonalized image of `P.P .== i`,
+# Since `blkD.blks[i]` is the block-diagonalized image of `P.matrix .== i`,
 # we obtain the new, symmetry reduced SDP by
 using SparseArrays
-PMat = hcat([sparse(vec(P.P .== i)) for i = 1:P.n]...)
+PMat = hcat([sparse(vec(P.matrix .== i)) for i = 1:dim(P)]...)
 newA = A * PMat
 newB = b
 newC = C' * PMat;
@@ -75,12 +75,12 @@ m = Model(CSDP.Optimizer)
 
 ## Initialize variables corresponding parts of the partition P
 ## >= 0 because the original SDP-matrices are entry-wise nonnegative
-x = @variable(m, x[1:P.n] >= 0)
+x = @variable(m, x[1:dim(P)] >= 0)
 
 @constraint(m, newA * x .== newB)
 @objective(m, Max, newC * x)
 
-psdBlocks = sum(blkD.blks[i] .* x[i] for i = 1:P.n)
+psdBlocks = sum(blkD.blks[i] .* x[i] for i = 1:dim(P))
 for blk in psdBlocks
     if size(blk, 1) > 1
         @constraint(m, blk in PSDCone())

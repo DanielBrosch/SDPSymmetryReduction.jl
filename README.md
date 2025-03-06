@@ -22,7 +22,7 @@ pkg> add SDPSymmetryReduction  # Press ']' to enter the Pkg REPL mode.
 ```
 
 ## Main use
-The function `admPartSubspace` determines an optimal admissible partition subspace for the problem. This is done using a randomized Jordan-reduction algorithm, and it returns a Jordan algebra (closed under linear combinations and squaring). SDPs can be restricted to such a subspace without changing their optimal value.
+The function `admissible_subspace` determines an optimal admissible partition subspace for the problem. This is done using a randomized Jordan-reduction algorithm, and it returns a Jordan algebra (closed under linear combinations and squaring). SDPs can be restricted to such a subspace without changing their optimal value.
 
 The function `blockDiagonalize` determines a block-diagonalization of a (Jordan)-algebra given by a partition `P` using a randomized algorithm.
 
@@ -50,13 +50,13 @@ A = hcat(vec(Adj), vec(Matrix(I, N, N)))'
 b = [0, 1]
 
 # Find the optimal admissible subspace (= Jordan algebra)
-P = admPartSubspace(C, A, b, true)
+P = admissible_subspace(C, A, b; verbose=true)
 
 # Block-diagonalize the algebra
 blkD = blockDiagonalize(P, true)
 
 # Calculate the coefficients of the new SDP
-PMat = hcat([sparse(vec(P.P .== i)) for i = 1:P.n]...)
+PMat = hcat([sparse(vec(P.matrix .== i)) for i = 1:dim(P)]...)
 newA = A * PMat
 newB = b
 newC = C' * PMat
@@ -66,12 +66,12 @@ m = Model(Mosek.Optimizer)
 
 # Initialize variables corresponding parts of the partition P
 # >= 0 because the original SDP-matrices are entry-wise nonnegative
-x = @variable(m, x[1:P.n] >= 0)
+x = @variable(m, x[1:dim(P)] >= 0)
 
 @constraint(m, newA * x .== newB)
 @objective(m, Max, newC * x)
 
-psdBlocks = sum(blkD.blks[i] .* x[i] for i = 1:P.n)
+psdBlocks = sum(blkD.blks[i] .* x[i] for i = 1:dim(P))
 for blk in psdBlocks
     if size(blk, 1) > 1
         @constraint(m, blk in PSDCone())

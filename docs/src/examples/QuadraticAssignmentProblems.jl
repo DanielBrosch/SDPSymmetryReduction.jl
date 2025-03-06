@@ -95,18 +95,18 @@ CPrg = sparse(vec(0.5 * (CPrg + CPrg')));
 
 # We first determine an optimal admissible partition subspace
 using SDPSymmetryReduction
-P = admPartSubspace(CPrg, APrg, bPrg, true)
-P.n
+P = admissible_subspace(CPrg, APrg, bPrg; verbose=true)
+dim(P)
 
-@test P.n == 150 #src
+@test dim(P) == 150 #src
 # And then we block-diagonalize it 
 blkD = blockDiagonalize(P, true);
 @test sort(blkD.blkSizes) == sort([7, 7, 7, 7, 7, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]) #src
 
 # ## Determining the coefficients of the reduced SDP 
-PMat = spzeros(Bool, n^4, P.n)
-for c in eachindex(P.P)
-    PMat[c, P.P[c]] = 1
+PMat = spzeros(Bool, n^4, dim(P))
+for c in eachindex(P.matrix)
+    PMat[c, P.matrix[c]] = 1
 end
 
 newA = APrg * PMat
@@ -128,12 +128,12 @@ m = Model(CSDP.Optimizer)
 
 ## Initialize variables corresponding parts of the partition P
 ## >= 0 because the original SDP-matrices are entry-wise nonnegative
-x = @variable(m, x[1:P.n] >= 0)
+x = @variable(m, x[1:dim(P)] >= 0)
 
 @constraint(m, newA * x .== newB)
 @objective(m, Min, newC * x)
 
-psdBlocks = @rewrite(sum(x[i] * blkD.blks[i] for i = 1:P.n));
+psdBlocks = @rewrite(sum(x[i] * blkD.blks[i] for i = 1:dim(P)));
 
 for blk in psdBlocks
     if size(blk, 1) > 1
