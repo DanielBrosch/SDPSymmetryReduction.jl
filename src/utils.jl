@@ -1,5 +1,10 @@
 function timed_print(io, t; msg=nothing)
-    Base.time_print(io, t.time * 1.0e9, t.gcstats.allocd, t.gcstats.total_time, Base.gc_alloc_count(t.gcstats), t.lock_conflicts, t.compile_time * 1.0e9, t.recompile_time * 1.0e9, true; msg=msg)
+    if VERSION >= v"1.11"
+        Base.time_print(io, t.time * 1.0e9, t.gcstats.allocd, t.gcstats.total_time, Base.gc_alloc_count(t.gcstats), t.lock_conflicts, t.compile_time * 1.0e9, t.recompile_time * 1.0e9, true; msg=msg)
+    else
+        Base.time_print(io, t.time * 1.0e9, t.gcstats.allocd, t.gcstats.total_time, Base.gc_alloc_count(t.gcstats); msg=msg)
+        println(io)
+    end
 end
 
 """
