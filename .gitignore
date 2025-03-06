@@ -5,3 +5,5 @@
 /docs/build/
 /docs/src/examples/*.md
 /.vscode
+test/qapdata
+docs/Manifest.toml

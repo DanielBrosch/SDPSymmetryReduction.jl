@@ -13,11 +13,11 @@ function reduceAndSolve(C, A, b;
     complex = false, 
     limitSize = 3000)
     
-    tmd = @timed admPartSubspace(C, A, b, verbose)
+    tmd = @timed admissible_subspace(C, A, b; verbose=verbose)
     P = tmd.value
     jordanTime = tmd.time
 
-    if P.n <= limitSize
+    if dim(P) <= limitSize
 
         tmd = @timed blockDiagonalize(P, verbose; complex = complex)
         blkD = tmd.value
@@ -37,9 +37,9 @@ function reduceAndSolve(C, A, b;
         end
 
         ## >= 0 because the SDP-matrices should be entry-wise nonnegative
-        x = @variable(m, x[1:P.n] >= 0)
+        x = @variable(m, x[1:dim(P)] >= 0)
 
-        PMat = hcat([sparse(vec(P.P .== i)) for i = 1:P.n]...)
+        PMat = hcat([sparse(vec(P.matrix .== i)) for i = 1:dim(P)]...)
 
         ## Reduce the number of constraints
         newConstraints = Float64.(hcat(A * PMat, b))
@@ -63,7 +63,7 @@ function reduceAndSolve(C, A, b;
                     ] :
                     blkD[2][1][i]
                 )
-            for j = 2:P.n
+            for j = 2:dim(P)
                 add_to_expression!.(
                     blkExpr,
                     x[j] .* (
@@ -96,8 +96,8 @@ function reduceAndSolve(C, A, b;
             solveTime = optTime,
             optVal = newC * value.(x),
             blkSize = blkD[1],
-            originalSize = size(P.P, 1),
-            newSize = P.n
+            originalSize = size(P.matrix, 1),
+            newSize = dim(P)
         )
     end
     return (
@@ -106,8 +106,8 @@ function reduceAndSolve(C, A, b;
         solveTime = 0,
         optVal = 0,
         blkSize = 0,
-        originalSize = size(P.P, 1),
-        newSize = P.n
+        originalSize = size(P.matrix, 1),
+        newSize = dim(P)
     )
 
 end

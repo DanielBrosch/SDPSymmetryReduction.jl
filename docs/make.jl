@@ -58,6 +58,7 @@ makedocs(;
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="https://DanielBrosch.com/SDPSymmetryReduction.jl",
         assets=String[],
+        repolink = "https://github.com/DanielBrosch/SDPSymmetryReduction.jl/blob/{commit}{path}#{line}"
     ),
     pages=[
         "Home" => "index.md",
