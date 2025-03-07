@@ -1,7 +1,7 @@
 name = "SDPSymmetryReduction"
 uuid = "56ed78d6-6c87-4b01-a4f7-e143c302c7a0"
 authors = ["Daniel Brosch <Daniel.Brosch@outlook.com> and contributors"]
-version = "0.1.3-SD"
+version = "0.2.0"
 
 [deps]
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
