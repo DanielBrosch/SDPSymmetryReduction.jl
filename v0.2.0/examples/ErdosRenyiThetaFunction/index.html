@@ -4,7 +4,7 @@ PG2q = vcat([[0, 0, 1]],
     [[0, 1, b] for b = 0:q-1],
     [[1, a, b] for a = 0:q-1 for b = 0:q-1])
 Adj = [x&#39; * y % q == 0 &amp;&amp; x != y for x in PG2q, y in PG2q]
-size(Adj)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(57, 57)</code></pre><pre><code class="language-julia hljs">spy(Adj)</code></pre><img src="a4115d60.svg" alt="Example block output"/><h2 id="The-Theta&#39;-function"><a class="docs-heading-anchor" href="#The-Theta&#39;-function">The Theta&#39;-function</a><a id="The-Theta&#39;-function-1"></a><a class="docs-heading-anchor-permalink" href="#The-Theta&#39;-function" title="Permalink"></a></h2><p>The Theta&#39;-function <span>$\vartheta(G)$</span> of a graph <span>$G=(V,E)$</span> is such an upper bound, based on semidefinite programming:</p><p class="math-container">\[\vartheta(G)\coloneqq \sup\{\langle X,J\rangle : \langle X,A\rangle = 0, X\succcurlyeq 0, X\geq 0\}.\]</p><p>In vectorized standard form this is simply</p><pre><code class="language-julia hljs">N = length(PG2q)
+size(Adj)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(57, 57)</code></pre><pre><code class="language-julia hljs">spy(Adj)</code></pre><img src="9574af21.svg" alt="Example block output"/><h2 id="The-Theta&#39;-function"><a class="docs-heading-anchor" href="#The-Theta&#39;-function">The Theta&#39;-function</a><a id="The-Theta&#39;-function-1"></a><a class="docs-heading-anchor-permalink" href="#The-Theta&#39;-function" title="Permalink"></a></h2><p>The Theta&#39;-function <span>$\vartheta(G)$</span> of a graph <span>$G=(V,E)$</span> is such an upper bound, based on semidefinite programming:</p><p class="math-container">\[\vartheta(G)\coloneqq \sup\{\langle X,J\rangle : \langle X,A\rangle = 0, X\succcurlyeq 0, X\geq 0\}.\]</p><p>In vectorized standard form this is simply</p><pre><code class="language-julia hljs">N = length(PG2q)
 C = ones(N^2)
 A = vcat(vec(Adj)&#39;, vec(Matrix{Float64}(I, N, N))&#39;)
 b = [0.0, 1.0];</code></pre><h2 id="Determining-the-symmetry-reduction"><a class="docs-heading-anchor" href="#Determining-the-symmetry-reduction">Determining the symmetry reduction</a><a id="Determining-the-symmetry-reduction-1"></a><a class="docs-heading-anchor-permalink" href="#Determining-the-symmetry-reduction" title="Permalink"></a></h2><p>We can now apply the Jordan reduction method to the problem. First, we need to determine an (optimal) admissible subspace.</p><pre><code class="language-julia hljs">using SDPSymmetryReduction
@@ -15,12 +15,12 @@ using Test #src</code></pre><pre class="documenter-example-output"><code class="
 <span class="sgr36"><span class="sgr1">│ </span></span>  maximal = 1653
 <span class="sgr36"><span class="sgr1">└ </span></span>  initial = 2
 <span class="sgr36"><span class="sgr1">┌ Info: </span></span>Minimal admissible subspace converged in 5 iterations at dimension:
-<span class="sgr36"><span class="sgr1">└ </span></span>  final = 18</code></pre><p>Running <code>admissible_subspace</code> returns a <code>Partition</code> object. <code>dim(P)</code> are the number of orbits (and thus variables), and <code>P.matrix</code> is a matrix with integer values from <code>1</code> trough <code>dim(P)</code>. Here, <code>P.matrix</code> looks like this (different color shades = different orbits):</p><img src="28a74fe6.svg" alt="Example block output"/><p>Now we can block-diagonalize the algebra (numerically)</p><pre><code class="language-julia hljs">blkD = blockDiagonalize(P, true);</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"><span class="sgr36"><span class="sgr1">[ Info: </span></span>Determining eigen-decomposition over Float64...
-<span class="sgr36"><span class="sgr1">[ Info: </span></span>  0.001233 seconds (51 allocations: 150.906 KiB)
+<span class="sgr36"><span class="sgr1">└ </span></span>  final = 18</code></pre><p>Running <code>admissible_subspace</code> returns a <code>Partition</code> object. <code>dim(P)</code> are the number of orbits (and thus variables), and <code>P.matrix</code> is a matrix with integer values from <code>1</code> trough <code>dim(P)</code>. Here, <code>P.matrix</code> looks like this (different color shades = different orbits):</p><img src="f757692c.svg" alt="Example block output"/><p>Now we can block-diagonalize the algebra (numerically)</p><pre><code class="language-julia hljs">blkD = blockDiagonalize(P, true);</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"><span class="sgr36"><span class="sgr1">[ Info: </span></span>Determining eigen-decomposition over Float64...
+<span class="sgr36"><span class="sgr1">[ Info: </span></span>  0.001145 seconds (51 allocations: 150.906 KiB)
 <span class="sgr36"><span class="sgr1">[ Info: </span></span>Determining the algebra-isomorphism...
-<span class="sgr36"><span class="sgr1">[ Info: </span></span>  0.000077 seconds (156 allocations: 72.531 KiB)
+<span class="sgr36"><span class="sgr1">[ Info: </span></span>  0.000080 seconds (156 allocations: 72.531 KiB)
 <span class="sgr36"><span class="sgr1">[ Info: </span></span>Calculating image of the basis of the algebra...
-<span class="sgr36"><span class="sgr1">[ Info: </span></span>  0.000229 seconds (362 allocations: 68.203 KiB)</code></pre><h2 id="Building-the-reduced-SDP"><a class="docs-heading-anchor" href="#Building-the-reduced-SDP">Building the reduced SDP</a><a id="Building-the-reduced-SDP-1"></a><a class="docs-heading-anchor-permalink" href="#Building-the-reduced-SDP" title="Permalink"></a></h2><p>Since <code>blkD.blks[i]</code> is the block-diagonalized image of <code>P.matrix .== i</code>, we obtain the new, symmetry reduced SDP by</p><pre><code class="language-julia hljs">using SparseArrays
+<span class="sgr36"><span class="sgr1">[ Info: </span></span>  0.000219 seconds (362 allocations: 68.203 KiB)</code></pre><h2 id="Building-the-reduced-SDP"><a class="docs-heading-anchor" href="#Building-the-reduced-SDP">Building the reduced SDP</a><a id="Building-the-reduced-SDP-1"></a><a class="docs-heading-anchor-permalink" href="#Building-the-reduced-SDP" title="Permalink"></a></h2><p>Since <code>blkD.blks[i]</code> is the block-diagonalized image of <code>P.matrix .== i</code>, we obtain the new, symmetry reduced SDP by</p><pre><code class="language-julia hljs">using SparseArrays
 PMat = hcat([sparse(vec(P.matrix .== i)) for i = 1:dim(P)]...)
 newA = A * PMat
 newB = b
@@ -43,28 +43,28 @@ for blk in psdBlocks
     end
 end
 
-optimize!(m)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Iter: 21 Ap: 9.58e-01 Pobj: -7.7942186e+00 Ad: 9.55e-01 Dobj: -7.7942190e+00
+optimize!(m)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Iter: 21 Ap: 9.57e-01 Pobj: -7.7942186e+00 Ad: 9.55e-01 Dobj: -7.7942190e+00
 Success: SDP solved
 Primal objective value: -7.7942186e+00
 Dual objective value: -7.7942190e+00
-Relative primal infeasibility: 2.12e-12
-Relative dual infeasibility: 9.35e-10
-Real Relative Gap: -2.42e-08
-XZ Relative Gap: 1.72e-09
-DIMACS error measures: 2.12e-12 0.00e+00 3.46e-08 0.00e+00 -2.42e-08 1.72e-09
+Relative primal infeasibility: 6.16e-13
+Relative dual infeasibility: 8.47e-10
+Real Relative Gap: -2.21e-08
+XZ Relative Gap: 1.49e-09
+DIMACS error measures: 6.16e-13 0.00e+00 3.14e-08 0.00e+00 -2.21e-08 1.49e-09
 CSDP 6.2.0
 Iter:  0 Ap: 0.00e+00 Pobj:  3.2490000e+04 Ad: 0.00e+00 Dobj:  0.0000000e+00
-Iter:  1 Ap: 8.64e-02 Pobj:  3.4910453e+04 Ad: 4.20e-01 Dobj:  9.3263828e+00
-Iter:  2 Ap: 4.48e-01 Pobj:  1.6457691e+04 Ad: 1.00e+00 Dobj:  4.3379496e+01
-Iter:  3 Ap: 8.74e-01 Pobj:  2.1035188e+03 Ad: 1.00e+00 Dobj:  4.5895836e+01
-Iter:  4 Ap: 9.47e-01 Pobj:  1.1921189e+02 Ad: 1.00e+00 Dobj:  4.6185216e+01
-Iter:  5 Ap: 9.28e-01 Pobj:  1.7151644e+01 Ad: 1.00e+00 Dobj:  3.2025613e+01
-Iter:  6 Ap: 8.61e-01 Pobj:  1.4590614e+01 Ad: 9.74e-01 Dobj:  2.1884266e+01
-Iter:  7 Ap: 7.46e-01 Pobj:  1.4970889e+01 Ad: 1.00e+00 Dobj:  1.7121926e+01
-Iter:  8 Ap: 8.39e-01 Pobj:  1.5554528e+01 Ad: 1.00e+00 Dobj:  1.6139529e+01
-Iter:  9 Ap: 8.49e-01 Pobj:  1.5678233e+01 Ad: 1.00e+00 Dobj:  1.5865074e+01
-Iter: 10 Ap: 8.01e-01 Pobj:  1.5723388e+01 Ad: 1.00e+00 Dobj:  1.5762844e+01
-Iter: 11 Ap: 9.20e-01 Pobj:  1.5741035e+01 Ad: 1.00e+00 Dobj:  1.5745338e+01
-Iter: 12 Ap: 9.28e-01 Pobj:  1.5743180e+01 Ad: 1.00e+00 Dobj:  1.5743422e+01
+Iter:  1 Ap: 8.64e-02 Pobj:  3.4910451e+04 Ad: 4.20e-01 Dobj:  9.3234386e+00
+Iter:  2 Ap: 4.48e-01 Pobj:  1.6462111e+04 Ad: 1.00e+00 Dobj:  4.3391395e+01
+Iter:  3 Ap: 8.74e-01 Pobj:  2.1044308e+03 Ad: 1.00e+00 Dobj:  4.5909475e+01
+Iter:  4 Ap: 9.47e-01 Pobj:  1.1926758e+02 Ad: 1.00e+00 Dobj:  4.6200082e+01
+Iter:  5 Ap: 9.28e-01 Pobj:  1.7155951e+01 Ad: 1.00e+00 Dobj:  3.2039814e+01
+Iter:  6 Ap: 8.61e-01 Pobj:  1.4590335e+01 Ad: 9.73e-01 Dobj:  2.1907580e+01
+Iter:  7 Ap: 7.45e-01 Pobj:  1.4968267e+01 Ad: 1.00e+00 Dobj:  1.7130316e+01
+Iter:  8 Ap: 8.32e-01 Pobj:  1.5547518e+01 Ad: 1.00e+00 Dobj:  1.6143529e+01
+Iter:  9 Ap: 8.65e-01 Pobj:  1.5680029e+01 Ad: 1.00e+00 Dobj:  1.5867092e+01
+Iter: 10 Ap: 7.94e-01 Pobj:  1.5723273e+01 Ad: 1.00e+00 Dobj:  1.5762673e+01
+Iter: 11 Ap: 9.18e-01 Pobj:  1.5740998e+01 Ad: 1.00e+00 Dobj:  1.5745304e+01
+Iter: 12 Ap: 9.28e-01 Pobj:  1.5743177e+01 Ad: 1.00e+00 Dobj:  1.5743422e+01
 Iter: 13 Ap: 9.49e-01 Pobj:  1.5743387e+01 Ad: 1.00e+00 Dobj:  1.5743288e+01
-Iter: 14 Ap: 9.40e-01 Pobj:  1.5743402e+01 Ad: 1.00e+00 Dobj:  1.5743400e+01</code></pre><pre><code class="language-julia hljs">termination_status(m)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">OPTIMAL::TerminationStatusCode = 1</code></pre><pre><code class="language-julia hljs">objective_value(m)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">15.743402692629516</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../QuadraticAssignmentProblems/">Symmetry reducting a strong relaxation of the quadratic assigment problem »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.1 on <span class="colophon-date" title="Friday 7 March 2025 14:28">Friday 7 March 2025</span>. Using Julia version 1.11.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+Iter: 14 Ap: 9.40e-01 Pobj:  1.5743402e+01 Ad: 1.00e+00 Dobj:  1.5743400e+01</code></pre><pre><code class="language-julia hljs">termination_status(m)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">OPTIMAL::TerminationStatusCode = 1</code></pre><pre><code class="language-julia hljs">objective_value(m)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">15.743402691978904</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../QuadraticAssignmentProblems/">Symmetry reducting a strong relaxation of the quadratic assigment problem »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.1 on <span class="colophon-date" title="Friday 7 March 2025 14:35">Friday 7 March 2025</span>. Using Julia version 1.11.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
