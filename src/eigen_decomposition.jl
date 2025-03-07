@@ -100,6 +100,30 @@ function __isconsistent(K)
 end
 
 """
+    isomorphism_partition(ed::EigenDecomposition, A::AbstractMatrix[; atol])
+Partition eigen-subspaces of `ed` into isomorphism classes based on a generic element `A`.
+
+Computes partition `K` of Murota et al. as defined in **Algorithm 4.1**, Step 3.
+"""
+function isomorphism_partition(eigdec::EigenDecomposition, A::AbstractMatrix; atol=1e-12 * size(A, 1))
+    Q = eigdec.vectors
+    Q′AQ = Q' * A * Q
+
+    neigspaces = length(eigdec)
+    K = IntDisjointSets(neigspaces) # tracks the merging of eigenspaces
+    for i in 1:neigspaces
+        Ei = eigdec[i]
+        for j in (i+1):neigspaces
+            Ej = eigdec[j]
+            if norm(@view Q′AQ[Ei, Ej], Inf) ≥ atol
+                union!(K, i, j)
+            end
+        end
+    end
+    return K
+end
+
+"""
     eigen_decomposition(P::AbstractPartition, A::AbstractMatrix; atol=1e-12*size(A,1))
 Find eigenspace decomposition of partition subspace `P` by inspecting a generic element thereof.
 
@@ -138,23 +162,9 @@ function eigen_decomposition(
     # in case of Jordan algebras all Aₚ have disjoint support
     # this allows us to analyze Qᵢ′·Aₚ·Qⱼ all at once
     randomize!(A, P)
-    Q′AQ = Q' * A * Q
 
     # compute the equivalence relation K (eq. 4.2)
-    neigspaces = length(eigdec)
-    K = IntDisjointSets(neigspaces) # tracks the merging of eigenspaces
-    for i in 1:neigspaces
-        for j in (i+1):neigspaces
-            in_same_set(K, i, j) && continue
-            Ei, Ej = eigdec[i], eigdec[j]
-            dim(Ei) != dim(Ej) && continue
-            if any(x -> abs(x) ≥ atol, @view Q′AQ[Ei, Ej])
-                # since endomorphism Q′AQ[Ei, Ej] : Ei → Ej is non-zero
-                # it must be an isomorphism, so we merge
-                union!(K, i, j)
-            end
-        end
-    end
+    K = isomorphism_partition(eigdec, A, atol=atol)
 
     if !__isconsistent(K)
         throw(
