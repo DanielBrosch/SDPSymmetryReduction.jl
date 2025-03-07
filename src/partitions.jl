@@ -35,20 +35,10 @@ function Partition{T}(M::AbstractMatrix) where {T}
 end
 
 function Partition{T}(M::AbstractMatrix{<:Integer}) where {T}
-    M_vals = unique(M)
-    @assert 0 ≤ first(M_vals)
-    vals = zeros(Int, maximum(M_vals) + 1) # to accomodate for 0 if it exists
-    dim = 0
-    for v in M_vals
-        iszero(v) && continue # to preserve 0
-        dim += 1
-        vals[v+1] = dim
-    end
-    res = zeros(T, size(M))
-    for (v, idx) in zip(M, eachindex(res))
-        res[idx] = vals[v+1]
-    end
-    return Partition{T}(dim, res)
+    P = Partition{T}(0, zeros(T, size(M)))
+    P.matrix .= M
+    P = __sort_unique!(P)
+    return P
 end
 
 function __sort_unique!(P::Partition)

@@ -17,7 +17,7 @@ function check_block_sizes(T::Type{<:Complex}, Q, P::AbstractPartition, verbose:
         @error "Dimension mismatch over for $T:" (final_dim, block_sizes) expedcted_dim = dim(P)
         throw(DimensionMismatch("""Decomposition failed potentially due to
         * Rounding error (try different epsilons and/or try again) or
-        * Unknow reason, please consider submitting an issue.
+        * Unknown reason, please consider submitting an issue.
          """))
     end
 end

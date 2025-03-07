@@ -48,11 +48,10 @@ import CSDP
 
         # cyclic group of order 3:
         C₃ = [
-            1 2 3
-            2 3 1
-            3 1 2
+            1 3 2
+            2 1 3
+            3 2 1
         ]
-        C₃ = reverse(C₃, dims=1)
         P₃ = Partition(C₃)
         @test_throws SDPSymmetryReduction.InvalidDecompositionField blockDiagonalize(P₃)
         @test blockDiagonalize(P₃, complex=true).blkSizes == [1, 1, 1]
@@ -63,4 +62,5 @@ import CSDP
     include("qap.jl")
 
     include("partitions_set.jl")
+    include("numerical_issues.jl")
 end
