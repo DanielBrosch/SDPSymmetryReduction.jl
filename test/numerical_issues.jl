@@ -80,7 +80,7 @@ P = [
             try
                 SDPSymmetryReduction.eigen_decomposition(part, A, atol=epsilon)
             catch err
-                res = niterates, err
+                res = (c, err)
                 break
             end
         end
@@ -89,7 +89,7 @@ P = [
     end
 
     N = 10_000
-    eps = 1e-6
+    eps = 1e-7
     res = try_fail_eigen_decomposition(part, eps, N)
     @test res == (N, nothing)
 end
