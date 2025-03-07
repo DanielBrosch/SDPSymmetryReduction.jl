@@ -177,10 +177,26 @@ function eigen_decomposition(
     return eigdec, K
 end
 
-# Murota et. al.
-# The algorithm is described in section
-# 4.3 Decomposition into irreducible components
-# The last part follows Remark 4.1 therein.
+"""
+    irreducible_decomposition(ed::EigenDecomposition, K, P::AbstractPartition[, A])
+Find a decomposition of `(ed, K)` into irreducible subspaces.
+
+Eigenspaces determined to be isomorphic by `K` will be merged together and a
+single column vector from each irreducible subspace for each isomorphism class
+will be returned.
+This method uses a generic element of the Jordan algebra defined by `P` and is
+therefore non-deterministic and may suffer from numerical errors.
+
+!!! note
+    While the vectors of `eigen_decomposition` determine an isomorphism of vector
+    spaces, `irreducible_decomposition` defines only a projection.
+
+Follows **Section 4.3 Decomposition into irreducible components** of
+> K. Murota et. al. A Numerical Algorithm for Block-Diagonal Decomposition of Matrix *-Algebras, Part I:
+> Proposed Approach and Application to Semidefinite Programming
+> _Japan Journal of Industrial and Applied Mathematics_, June 2010
+> DOI: 10.1007/s13160-010-0006-9
+"""
 function irreducible_decomposition(
     eigdec::EigenDecomposition,
     K::IntDisjointSets,
@@ -203,7 +219,8 @@ function irreducible_decomposition(
         end
         # merge eigenspaces according to partition K
         QKi = reduce(hcat, [vectors(eigdec[i′]) for i′ in Ki])
-        # Pi will be diagonal matrix diag(P₁, P₂, ..., P)  with each block of dimension
+        # Pi will be the diagonal matrix diag(P₁, P₂, ..., Pₙ)
+        # with each block of dimension
         dimEi = dim(eigdec[i]) # m_i in Murota;
         Pi = zeros(T, size(QKi, 2), size(QKi, 2))
 
@@ -218,7 +235,7 @@ function irreducible_decomposition(
             Ej = eigdec[j]
             blk = idx .+ n * dimEi
             P_blk = view(Pi, blk, blk)
-            P_blk .= inv(block(A, Ei, Ej))
+            P_blk .= block(A, Ei, Ej)' # no need for inverse here, as A is hermitian
             # recover B_ij as the norm of the first row
             P_blk ./= norm(P_blk[1, :])
         end
