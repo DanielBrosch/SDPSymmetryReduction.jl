@@ -66,11 +66,11 @@ bPrg[currentRow] = n^2
 CPrg = sparse(vec(0.5 * (CPrg + CPrg&#39;)));</code></pre><h2 id="Symmetry-reducing-the-SDP"><a class="docs-heading-anchor" href="#Symmetry-reducing-the-SDP">Symmetry reducing the SDP</a><a id="Symmetry-reducing-the-SDP-1"></a><a class="docs-heading-anchor-permalink" href="#Symmetry-reducing-the-SDP" title="Permalink"></a></h2><p>We first determine an optimal admissible partition subspace</p><pre><code class="language-julia hljs">using SDPSymmetryReduction
 P = admissible_subspace(CPrg, APrg, bPrg; verbose=true)
 dim(P)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">150</code></pre><p>And then we block-diagonalize it</p><pre><code class="language-julia hljs">blkD = blockDiagonalize(P, true);</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"><span class="sgr36"><span class="sgr1">[ Info: </span></span>Determining eigen-decomposition over Float64...
-<span class="sgr36"><span class="sgr1">[ Info: </span></span>  0.024698 seconds (59 allocations: 2.600 MiB)
+<span class="sgr36"><span class="sgr1">[ Info: </span></span>  0.024414 seconds (59 allocations: 2.600 MiB)
 <span class="sgr36"><span class="sgr1">[ Info: </span></span>Determining the algebra-isomorphism...
-<span class="sgr36"><span class="sgr1">[ Info: </span></span>  0.002147 seconds (502 allocations: 602.031 KiB)
+<span class="sgr36"><span class="sgr1">[ Info: </span></span>  0.002178 seconds (502 allocations: 602.031 KiB)
 <span class="sgr36"><span class="sgr1">[ Info: </span></span>Calculating image of the basis of the algebra...
-<span class="sgr36"><span class="sgr1">[ Info: </span></span>  0.011141 seconds (5.94 k allocations: 1.516 MiB)</code></pre><h2 id="Determining-the-coefficients-of-the-reduced-SDP"><a class="docs-heading-anchor" href="#Determining-the-coefficients-of-the-reduced-SDP">Determining the coefficients of the reduced SDP</a><a id="Determining-the-coefficients-of-the-reduced-SDP-1"></a><a class="docs-heading-anchor-permalink" href="#Determining-the-coefficients-of-the-reduced-SDP" title="Permalink"></a></h2><pre><code class="language-julia hljs">PMat = spzeros(Bool, n^4, dim(P))
+<span class="sgr36"><span class="sgr1">[ Info: </span></span>  0.010994 seconds (5.94 k allocations: 1.516 MiB)</code></pre><h2 id="Determining-the-coefficients-of-the-reduced-SDP"><a class="docs-heading-anchor" href="#Determining-the-coefficients-of-the-reduced-SDP">Determining the coefficients of the reduced SDP</a><a id="Determining-the-coefficients-of-the-reduced-SDP-1"></a><a class="docs-heading-anchor-permalink" href="#Determining-the-coefficients-of-the-reduced-SDP" title="Permalink"></a></h2><pre><code class="language-julia hljs">PMat = spzeros(Bool, n^4, dim(P))
 for c in eachindex(P.matrix)
     PMat[c, P.matrix[c]] = 1
 end
@@ -101,30 +101,30 @@ optimize!(m)</code></pre><pre class="documenter-example-output"><code class="noh
 Success: SDP solved
 Primal objective value: 1.5743403e+01
 Dual objective value: 1.5743403e+01
-Relative primal infeasibility: 7.14e-11
-Relative dual infeasibility: 1.87e-09
+Relative primal infeasibility: 7.32e-11
+Relative dual infeasibility: 1.88e-09
 Real Relative Gap: -4.58e-09
-XZ Relative Gap: 2.84e-09
-DIMACS error measures: 7.14e-11 0.00e+00 2.41e-08 0.00e+00 -4.58e-09 2.84e-09
+XZ Relative Gap: 2.91e-09
+DIMACS error measures: 7.32e-11 0.00e+00 2.43e-08 0.00e+00 -4.58e-09 2.91e-09
 CSDP 6.2.0
 Iter:  0 Ap: 0.00e+00 Pobj: -7.0720000e+04 Ad: 0.00e+00 Dobj:  0.0000000e+00
-Iter:  1 Ap: 3.30e-01 Pobj: -7.6764341e+04 Ad: 1.00e+00 Dobj:  5.2143222e+02
-Iter:  2 Ap: 9.31e-01 Pobj: -7.9082616e+03 Ad: 1.00e+00 Dobj:  5.4816121e+02
-Iter:  3 Ap: 9.29e-01 Pobj: -7.8394518e+02 Ad: 1.00e+00 Dobj:  5.5455962e+02
-Iter:  4 Ap: 8.82e-01 Pobj: -1.6010506e+02 Ad: 1.00e+00 Dobj:  4.4319985e+02
-Iter:  5 Ap: 6.38e-01 Pobj: -9.4286829e+01 Ad: 1.00e+00 Dobj:  2.0725862e+02
-Iter:  6 Ap: 5.83e-01 Pobj: -5.2060226e+01 Ad: 9.83e-01 Dobj:  1.2944962e+02
-Iter:  7 Ap: 7.41e-01 Pobj: -2.9043703e+01 Ad: 8.76e-01 Dobj:  1.2160483e+02
-Iter:  8 Ap: 4.71e-01 Pobj: -2.2214326e+01 Ad: 1.00e+00 Dobj:  4.5032899e+01
-Iter:  9 Ap: 7.05e-01 Pobj: -1.5776639e+01 Ad: 1.00e+00 Dobj:  1.8449688e+01
-Iter: 10 Ap: 8.46e-01 Pobj: -1.0958703e+01 Ad: 1.00e+00 Dobj:  1.7160179e+00
-Iter: 11 Ap: 7.61e-01 Pobj: -9.1814486e+00 Ad: 1.00e+00 Dobj: -4.9377147e+00
-Iter: 12 Ap: 8.72e-01 Pobj: -8.2070285e+00 Ad: 1.00e+00 Dobj: -6.7855093e+00
-Iter: 13 Ap: 6.54e-01 Pobj: -8.0218725e+00 Ad: 9.66e-01 Dobj: -7.4195098e+00
-Iter: 14 Ap: 7.70e-01 Pobj: -7.8784542e+00 Ad: 1.00e+00 Dobj: -7.6528787e+00
-Iter: 15 Ap: 8.35e-01 Pobj: -7.8157560e+00 Ad: 1.00e+00 Dobj: -7.7639190e+00
-Iter: 16 Ap: 9.02e-01 Pobj: -7.7982037e+00 Ad: 1.00e+00 Dobj: -7.7869189e+00
-Iter: 17 Ap: 9.66e-01 Pobj: -7.7947115e+00 Ad: 9.86e-01 Dobj: -7.7933324e+00
-Iter: 18 Ap: 9.97e-01 Pobj: -7.7942393e+00 Ad: 9.92e-01 Dobj: -7.7945715e+00
-Iter: 19 Ap: 1.00e+00 Pobj: -7.7942211e+00 Ad: 9.79e-01 Dobj: -7.7945268e+00
-Iter: 20 Ap: 1.00e+00 Pobj: -7.7942188e+00 Ad: 1.00e+00 Dobj: -7.7942308e+00</code></pre><pre><code class="language-julia hljs">termination_status(m)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">OPTIMAL::TerminationStatusCode = 1</code></pre><pre><code class="language-julia hljs">objective_value(m)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">7.794218666097556</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../ErdosRenyiThetaFunction/">« The Theta&#39;-function of Erdos-Renyi graphs</a><a class="docs-footer-nextpage" href="../ReduceAndSolveJuMP/">General example »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.1 on <span class="colophon-date" title="Friday 7 March 2025 13:50">Friday 7 March 2025</span>. Using Julia version 1.11.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+Iter:  1 Ap: 3.30e-01 Pobj: -7.6764370e+04 Ad: 1.00e+00 Dobj:  5.2143222e+02
+Iter:  2 Ap: 9.31e-01 Pobj: -7.9077230e+03 Ad: 1.00e+00 Dobj:  5.4815269e+02
+Iter:  3 Ap: 9.29e-01 Pobj: -7.7569097e+02 Ad: 1.00e+00 Dobj:  5.5384592e+02
+Iter:  4 Ap: 8.91e-01 Pobj: -1.5095468e+02 Ad: 1.00e+00 Dobj:  4.3595081e+02
+Iter:  5 Ap: 6.25e-01 Pobj: -9.1851967e+01 Ad: 1.00e+00 Dobj:  1.9020095e+02
+Iter:  6 Ap: 5.89e-01 Pobj: -4.9396500e+01 Ad: 1.00e+00 Dobj:  1.2678660e+02
+Iter:  7 Ap: 7.29e-01 Pobj: -2.8167318e+01 Ad: 8.50e-01 Dobj:  1.1438935e+02
+Iter:  8 Ap: 4.54e-01 Pobj: -2.1933313e+01 Ad: 1.00e+00 Dobj:  4.1584544e+01
+Iter:  9 Ap: 7.33e-01 Pobj: -1.5200441e+01 Ad: 1.00e+00 Dobj:  1.6797485e+01
+Iter: 10 Ap: 8.43e-01 Pobj: -1.0711490e+01 Ad: 1.00e+00 Dobj:  6.0638680e-01
+Iter: 11 Ap: 8.14e-01 Pobj: -8.9505552e+00 Ad: 1.00e+00 Dobj: -5.2143825e+00
+Iter: 12 Ap: 7.63e-01 Pobj: -8.2567313e+00 Ad: 1.00e+00 Dobj: -6.8945159e+00
+Iter: 13 Ap: 7.60e-01 Pobj: -7.9849172e+00 Ad: 1.00e+00 Dobj: -7.4632992e+00
+Iter: 14 Ap: 7.75e-01 Pobj: -7.8619344e+00 Ad: 1.00e+00 Dobj: -7.6908604e+00
+Iter: 15 Ap: 8.38e-01 Pobj: -7.8126625e+00 Ad: 1.00e+00 Dobj: -7.7649731e+00
+Iter: 16 Ap: 8.68e-01 Pobj: -7.7982876e+00 Ad: 1.00e+00 Dobj: -7.7879093e+00
+Iter: 17 Ap: 9.58e-01 Pobj: -7.7946362e+00 Ad: 1.00e+00 Dobj: -7.7937739e+00
+Iter: 18 Ap: 9.90e-01 Pobj: -7.7942366e+00 Ad: 9.99e-01 Dobj: -7.7945983e+00
+Iter: 19 Ap: 1.00e+00 Pobj: -7.7942204e+00 Ad: 1.00e+00 Dobj: -7.7943909e+00
+Iter: 20 Ap: 1.00e+00 Pobj: -7.7942187e+00 Ad: 1.00e+00 Dobj: -7.7942259e+00</code></pre><pre><code class="language-julia hljs">termination_status(m)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">OPTIMAL::TerminationStatusCode = 1</code></pre><pre><code class="language-julia hljs">objective_value(m)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">7.794218625756987</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../ErdosRenyiThetaFunction/">« The Theta&#39;-function of Erdos-Renyi graphs</a><a class="docs-footer-nextpage" href="../ReduceAndSolveJuMP/">General example »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.1 on <span class="colophon-date" title="Friday 7 March 2025 14:28">Friday 7 March 2025</span>. Using Julia version 1.11.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
