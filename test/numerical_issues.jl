@@ -1,4 +1,3 @@
-using SDPSymmetryReduction
 P = [
     1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64;
     2 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 2 88 89 66 90 68 71 91 92 93 94 84 95 96 97 98 99 100 90 101 72 76 77 102 103 82 81 104 105 106 107 83 94 108 109 93 110 95 111 98;
@@ -66,11 +65,31 @@ P = [
     64 98 172 204 275 305 347 414 466 492 530 567 627 672 693 726 758 811 849 885 919 933 959 984 40 1008 1031 148 1071 251 390 1079 1099 1135 1156 901 1175 1178 1193 1221 1208 1209 1053 1210 442 604 650 1211 1212 829 790 1213 1214 1215 1216 866 1140 1217 1218 1118 1219 1160 1220 1207
 ]
 
-part = SDPSymmetryReduction.Partition(P)
+@testset "numerical issues" begin
 
-c = 0
+    part = SDPSymmetryReduction.Partition(P)
 
-while true
-    @show c = c + 1
-    Qs = SDPSymmetryReduction.diagonalize(Float64, part)
+    function try_fail_eigen_decomposition(part, epsilon, niterates)
+        A = SDPSymmetryReduction.randomize(Float64, part)
+        print("testing for numerical issues ('·'/100it): ")
+        res = niterates, nothing
+        for c in 1:niterates
+            if c % 100 == 0
+                print('·')
+            end
+            try
+                SDPSymmetryReduction.eigen_decomposition(part, A, atol=epsilon)
+            catch err
+                res = niterates, err
+                break
+            end
+        end
+        println(" done!")
+        return res
+    end
+
+    N = 10_000
+    eps = 1e-6
+    res = try_fail_eigen_decomposition(part, eps, N)
+    @test res == (N, nothing)
 end

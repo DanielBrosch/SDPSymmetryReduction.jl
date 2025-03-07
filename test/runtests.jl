@@ -63,4 +63,5 @@ import CSDP
     include("qap.jl")
 
     include("partitions_set.jl")
+    include("numerical_issues.jl")
 end
