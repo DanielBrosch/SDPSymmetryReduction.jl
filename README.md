@@ -5,8 +5,6 @@
 [![Build Status](https://github.com/DanielBrosch/SDPSymmetryReduction.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/DanielBrosch/SDPSymmetryReduction.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/DanielBrosch/SDPSymmetryReduction.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/DanielBrosch/SDPSymmetryReduction.jl)
 
-# SDPSymmetryReduction
-
 Numerically reduces semidefinite programming problems by exploiting their symmetry. Input is in vectorized standard form
 ```
 sup/inf     dot(C,x)
