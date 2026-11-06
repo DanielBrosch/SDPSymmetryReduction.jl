@@ -72,4 +72,5 @@ import CSDP
 
     include("partitions_set.jl")
     include("numerical_issues.jl")
+    include("moi.jl")
 end

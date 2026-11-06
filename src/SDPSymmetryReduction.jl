@@ -15,5 +15,6 @@ include("abstract_part.jl")
 include("partitions.jl")
 include("eigen_decomposition.jl")
 include("diagonalize.jl")
+include("optimizer.jl")
 
 end
