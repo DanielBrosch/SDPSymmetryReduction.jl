@@ -26,6 +26,13 @@ function diagonalize(::Type{T}, P::AbstractPartition; verbose=false, atol=1e-12 
     if T <: Complex
         P = desymmetrize(P; verbose=verbose)
     end
+    n = size(P, 1)
+    # The algebra of all symmetric (resp. all) matrices is irreducible. As all
+    # its eigenspaces are isomorphic, `isomorphism_partition` cannot find a
+    # threshold separating isomorphic and non-isomorphic ones.
+    if dim(P) == (T <: Complex ? n^2 : div(n * (n + 1), 2))
+        return [Matrix{T}(I, n, n)]
+    end
     A = Matrix{T}(undef, size(P))
 
     verbose && @info "Determining eigen-decomposition over $T..."
