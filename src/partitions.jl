@@ -60,8 +60,14 @@ function __sort_unique!(P::Partition)
 end
 
 function refine!(P1::Partition{T}, P2::Partition{S}) where {T,S}
-    P1.matrix .+= P2.matrix .* (dim(P1) + 1)
-    P1 = __sort_unique!(P1)
+    # Label the pairs of labels in order of first appearance. Combining them
+    # into `P1.matrix + P2.matrix * (dim(P1) + 1)` instead could overflow `T`.
+    labels = Dict((zero(T), zero(S)) => zero(T))
+    for idx in eachindex(P1.matrix, P2.matrix)
+        key = (P1.matrix[idx], P2.matrix[idx])
+        P1.matrix[idx] = get!(() -> T(length(labels)), labels, key)
+    end
+    P1.nparts = length(labels) - 1
     return P1
 end
 
@@ -81,11 +87,11 @@ function admissible_subspace(
     verbose::Bool=false,
     atol=Base.rtoldefault(real(T)),
 ) where {T<:AbstractFloat}
-    return admissible_subspace(Partition{UInt16}, C, A, b; verbose=verbose, atol=atol)
+    return admissible_subspace(Partition{UInt32}, C, A, b; verbose=verbose, atol=atol)
 end
 
 """
-    admissible_subspace([Partition{UInt16},] C, A, b[; verbose, atol])
+    admissible_subspace([Partition{UInt32},] C, A, b[; verbose, atol])
 Return the optimal admissible partition subspace for the semidefinite problem
 
 > ```
