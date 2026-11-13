@@ -24,6 +24,14 @@ import CSDP
     P3 = Partition([1 2 4; 2 3 5; 2 3 6])
     @test SDPSymmetryReduction.coarsestPart(P1, P2) == P3
 
+    @testset "refine! does not overflow the label type" begin
+        # `400 + 400 * (400 + 1)` does not fit in an `UInt16`
+        M = reshape(1:400, 20, 20)
+        P = Partition{UInt16}(M)
+        Q = SDPSymmetryReduction.refine!(deepcopy(P), Partition{UInt16}(M'))
+        @test Q == P
+    end
+
     @test SDPSymmetryReduction.part(SDPSymmetryReduction.rndPart(P1)) == P1
 
     M = rand(10, 10)
