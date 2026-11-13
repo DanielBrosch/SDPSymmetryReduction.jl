@@ -57,6 +57,15 @@ import CSDP
         @test blockDiagonalize(P₃, complex=true).blkSizes == [1, 1, 1]
     end
 
+    @testset "no symmetry" begin
+        for n in [3, 10], _ in 1:10
+            M = rand(n, n)
+            P = Partition(M + M')
+            @test blockDiagonalize(P, false).blkSizes == [n]
+            @test blockDiagonalize(P, false; complex=true).blkSizes == [n]
+        end
+    end
+
     include("sd_problems.jl")
     include("lovasz.jl")
     include("qap.jl")
