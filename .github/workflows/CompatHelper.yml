@@ -5,8 +5,14 @@ on:
   workflow_dispatch:
 jobs:
   CompatHelper:
+    permissions:
+      contents: write
+      pull-requests: write
     runs-on: ubuntu-latest
     steps:
+      - uses: julia-actions/setup-julia@v3
+        with:
+          version: '1'
       - name: Pkg.add("CompatHelper")
         run: julia -e 'using Pkg; Pkg.add("CompatHelper")'
       - name: CompatHelper.main()
