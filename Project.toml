@@ -17,8 +17,8 @@ MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
 SDPSymmetryReductionMOIExt = "MathOptInterface"
 
 [compat]
-DataStructures = "0.18"
 Krylov = "0.9, 0.10"
+DataStructures = "0.18, 0.19"
 LinearAlgebra = "1"
 MathOptInterface = "1"
 Random = "1"
