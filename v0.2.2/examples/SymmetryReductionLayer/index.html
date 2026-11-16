@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="referrer" content="no-referrer"/><title>Symmetry reduction layer for MathOptInterface · SDPSymmetryReduction.jl</title><meta name="title" content="Symmetry reduction layer for MathOptInterface · SDPSymmetryReduction.jl"/><meta property="og:title" content="Symmetry reduction layer for MathOptInterface · SDPSymmetryReduction.jl"/><meta property="twitter:title" content="Symmetry reduction layer for MathOptInterface · SDPSymmetryReduction.jl"/><meta name="description" content="Documentation for SDPSymmetryReduction.jl."/><meta property="og:description" content="Documentation for SDPSymmetryReduction.jl."/><meta property="twitter:description" content="Documentation for SDPSymmetryReduction.jl."/><meta property="og:url" content="https://DanielBrosch.com/SDPSymmetryReduction.jl/examples/SymmetryReductionLayer/"/><meta property="twitter:url" content="https://DanielBrosch.com/SDPSymmetryReduction.jl/examples/SymmetryReductionLayer/"/><link rel="canonical" href="https://DanielBrosch.com/SDPSymmetryReduction.jl/examples/SymmetryReductionLayer/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.63.2/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">SDPSymmetryReduction.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../ErdosRenyiThetaFunction/">The Theta&#39;-function of Erdos-Renyi graphs</a></li><li><a class="tocitem" href="../QuadraticAssignmentProblems/">Symmetry reducting a strong relaxation of the quadratic assigment problem</a></li><li><a class="tocitem" href="../ReduceAndSolveJuMP/">General example</a></li><li class="is-active"><a class="tocitem" href>Symmetry reduction layer for MathOptInterface</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>Symmetry reduction layer for MathOptInterface</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Symmetry reduction layer for MathOptInterface</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/DanielBrosch/SDPSymmetryReduction.jl/blob/{commit}{path}#{line}" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/DanielBrosch/SDPSymmetryReduction.jl/blob/main/docs/src/examples/SymmetryReductionLayer.jl#" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Symmetry-reduction-layer-for-MathOptInterface"><a class="docs-heading-anchor" href="#Symmetry-reduction-layer-for-MathOptInterface">Symmetry reduction layer for MathOptInterface</a><a id="Symmetry-reduction-layer-for-MathOptInterface-1"></a><a class="docs-heading-anchor-permalink" href="#Symmetry-reduction-layer-for-MathOptInterface" title="Permalink"></a></h1><p>Instead of reducing the problem by hand, the problem can be modeled with JuMP and reduced automatically by <a href="../../#SDPSymmetryReduction.Optimizer"><code>SDPSymmetryReduction.Optimizer</code></a>. It reduces the problem before giving it to the inner solver and maps the solution of the reduced problem back to the original problem.</p><p>As an example, we compute the Lovász theta function of the Petersen graph</p><p class="math-container">\[\vartheta(G)\coloneqq \inf\{t : tI + \sum_{ij \in E} y_{ij} (E_{ij} + E_{ji}) - J \succcurlyeq 0\}.\]</p><pre><code class="language-julia hljs">using JuMP
+import CSDP
+import LinearAlgebra
+using SDPSymmetryReduction
+
+edges = vcat(
+    [(i, i % 5 + 1) for i in 1:5],
+    [(i, i + 5) for i in 1:5],
+    [(i + 5, (i + 1) % 5 + 6) for i in 1:5],
+)
+model = Model(() -&gt; SDPSymmetryReduction.Optimizer(CSDP.Optimizer))
+set_silent(model)
+@variable(model, t)
+@variable(model, y[edges])
+@objective(model, Min, t)
+S = t * Matrix(LinearAlgebra.I, 10, 10) - ones(10, 10)
+for e in edges
+    S[e[1], e[2]] += y[e]
+    S[e[2], e[1]] += y[e]
+end
+@constraint(model, psd, LinearAlgebra.Symmetric(S) in PSDCone())
+optimize!(model)
+solution_summary(model)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">solution_summary(; result = 1, verbose = false)
+├ solver_name          : SDPSymmetryReduction with CSDP
+├ Termination
+│ ├ termination_status : OPTIMAL
+│ ├ result_count       : 1
+│ └ raw_status         : Problem solved to optimality.
+├ Solution (result = 1)
+│ ├ primal_status        : FEASIBLE_POINT
+│ ├ dual_status          : FEASIBLE_POINT
+│ ├ objective_value      : 4.00000e+00
+│ └ dual_objective_value : 4.00000e+00
+└ Work counters
+  └ solve_time (sec)   : 5.11098e-03</code></pre><p>The 16 variables are reduced to 2 variables, as all the edges are in the same orbit, and the semidefinite constraint of size 10 is reduced to 3 nonnegativity constraints. The optimal value is the Lovász theta function of the Petersen graph</p><pre><code class="language-julia hljs">objective_value(model)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">4.000000003090721</code></pre><p>The primal and dual solutions are available as usual</p><pre><code class="language-julia hljs">value.(y)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">1-dimensional DenseAxisArray{Float64,1,...} with index sets:
+    Dimension 1, [(1, 2), (2, 3), (3, 4), (4, 5), (5, 1), (1, 6), (2, 7), (3, 8), (4, 9), (5, 10), (6, 8), (7, 9), (8, 10), (9, 6), (10, 7)]
+And data, a 15-element Vector{Float64}:
+ 2.0000000002575566
+ 2.0000000002575566
+ 2.0000000002575566
+ 2.0000000002575566
+ 2.0000000002575566
+ 2.0000000002575566
+ 2.0000000002575566
+ 2.0000000002575566
+ 2.0000000002575566
+ 2.0000000002575566
+ 2.0000000002575566
+ 2.0000000002575566
+ 2.0000000002575566
+ 2.0000000002575566
+ 2.0000000002575566</code></pre><p>The dual of the semidefinite constraint is the solution of the dual problem</p><p class="math-container">\[\sup\{\langle X,J\rangle : \langle X,I\rangle = 1, X_{ij} = 0 \text{ for } ij \in E, X\succcurlyeq 0\}.\]</p><pre><code class="language-julia hljs">dual(psd)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">10×10 LinearAlgebra.Symmetric{Float64, Matrix{Float64}}:
+ 0.1          1.80396e-10  0.05         …  0.05         0.05
+ 1.80396e-10  0.1          1.80396e-10     0.05         0.05
+ 0.05         1.80396e-10  0.1             0.05         0.05
+ 0.05         0.05         1.80396e-10     1.80396e-10  0.05
+ 1.80396e-10  0.05         0.05            0.05         1.80396e-10
+ 1.80396e-10  0.05         0.05         …  1.80396e-10  0.05
+ 0.05         1.80396e-10  0.05            1.80396e-10  1.80396e-10
+ 0.05         0.05         1.80396e-10     0.05         1.80396e-10
+ 0.05         0.05         0.05            0.1          0.05
+ 0.05         0.05         0.05            0.05         0.1</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../ReduceAndSolveJuMP/">« General example</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.20.0 on <span class="colophon-date" title="Monday 16 November 2026 15:09">Monday 16 November 2026</span>. Using Julia version 1.13.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
