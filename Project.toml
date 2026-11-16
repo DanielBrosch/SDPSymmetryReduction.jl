@@ -1,7 +1,7 @@
 name = "SDPSymmetryReduction"
 uuid = "56ed78d6-6c87-4b01-a4f7-e143c302c7a0"
-authors = ["Daniel Brosch <Daniel.Brosch@outlook.com> and contributors"]
 version = "0.2.1"
+authors = ["Daniel Brosch <Daniel.Brosch@outlook.com> and contributors"]
 
 [deps]
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
@@ -18,7 +18,7 @@ SDPSymmetryReductionMOIExt = "MathOptInterface"
 
 [compat]
 DataStructures = "0.18"
-Krylov = "0.9"
+Krylov = "0.9, 0.10"
 LinearAlgebra = "1"
 MathOptInterface = "1"
 Random = "1"
