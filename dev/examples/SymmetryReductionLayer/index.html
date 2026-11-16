@@ -33,24 +33,24 @@ solution_summary(model)</code></pre><pre class="documenter-example-output"><code
 │ ├ objective_value      : 4.00000e+00
 │ └ dual_objective_value : 4.00000e+00
 └ Work counters
-  └ solve_time (sec)   : 6.41799e-03</code></pre><p>The 16 variables are reduced to 2 variables, as all the edges are in the same orbit, and the semidefinite constraint of size 10 is reduced to 3 nonnegativity constraints. The optimal value is the Lovász theta function of the Petersen graph</p><pre><code class="language-julia hljs">objective_value(model)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">4.000000003090735</code></pre><p>The primal and dual solutions are available as usual</p><pre><code class="language-julia hljs">value.(y)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">1-dimensional DenseAxisArray{Float64,1,...} with index sets:
+  └ solve_time (sec)   : 5.80907e-03</code></pre><p>The 16 variables are reduced to 2 variables, as all the edges are in the same orbit, and the semidefinite constraint of size 10 is reduced to 3 nonnegativity constraints. The optimal value is the Lovász theta function of the Petersen graph</p><pre><code class="language-julia hljs">objective_value(model)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">4.000000003090735</code></pre><p>The primal and dual solutions are available as usual</p><pre><code class="language-julia hljs">value.(y)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">1-dimensional DenseAxisArray{Float64,1,...} with index sets:
     Dimension 1, [(1, 2), (2, 3), (3, 4), (4, 5), (5, 1), (1, 6), (2, 7), (3, 8), (4, 9), (5, 10), (6, 8), (7, 9), (8, 10), (9, 6), (10, 7)]
 And data, a 15-element Vector{Float64}:
- 2.0000000002575513
- 2.0000000002575513
- 2.0000000002575513
- 2.0000000002575513
- 2.0000000002575513
- 2.0000000002575513
- 2.0000000002575513
- 2.0000000002575513
- 2.0000000002575513
- 2.0000000002575513
- 2.0000000002575513
- 2.0000000002575513
- 2.0000000002575513
- 2.0000000002575513
- 2.0000000002575513</code></pre><p>The dual of the semidefinite constraint is the solution of the dual problem</p><p class="math-container">\[\sup\{\langle X,J\rangle : \langle X,I\rangle = 1, X_{ij} = 0 \text{ for } ij \in E, X\succcurlyeq 0\}.\]</p><pre><code class="language-julia hljs">dual(psd)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">10×10 LinearAlgebra.Symmetric{Float64, Matrix{Float64}}:
+ 2.0000000002575598
+ 2.0000000002575598
+ 2.0000000002575598
+ 2.0000000002575598
+ 2.0000000002575598
+ 2.0000000002575598
+ 2.0000000002575598
+ 2.0000000002575598
+ 2.0000000002575598
+ 2.0000000002575598
+ 2.0000000002575598
+ 2.0000000002575598
+ 2.0000000002575598
+ 2.0000000002575598
+ 2.0000000002575598</code></pre><p>The dual of the semidefinite constraint is the solution of the dual problem</p><p class="math-container">\[\sup\{\langle X,J\rangle : \langle X,I\rangle = 1, X_{ij} = 0 \text{ for } ij \in E, X\succcurlyeq 0\}.\]</p><pre><code class="language-julia hljs">dual(psd)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">10×10 LinearAlgebra.Symmetric{Float64, Matrix{Float64}}:
  0.1          1.80396e-10  0.05         …  0.05         0.05
  1.80396e-10  0.1          1.80396e-10     0.05         0.05
  0.05         1.80396e-10  0.1             0.05         0.05
@@ -60,4 +60,4 @@ And data, a 15-element Vector{Float64}:
  0.05         1.80396e-10  0.05            1.80396e-10  1.80396e-10
  0.05         0.05         1.80396e-10     0.05         1.80396e-10
  0.05         0.05         0.05            0.1          0.05
- 0.05         0.05         0.05            0.05         0.1</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../ReduceAndSolveJuMP/">« General example</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.20.0 on <span class="colophon-date" title="Monday 16 November 2026 13:32">Monday 16 November 2026</span>. Using Julia version 1.13.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+ 0.05         0.05         0.05            0.05         0.1</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../ReduceAndSolveJuMP/">« General example</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.20.0 on <span class="colophon-date" title="Monday 16 November 2026 13:56">Monday 16 November 2026</span>. Using Julia version 1.13.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
