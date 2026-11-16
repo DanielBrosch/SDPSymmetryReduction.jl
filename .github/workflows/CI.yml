@@ -19,6 +19,10 @@ jobs:
         julia-version: ['lts', '1', 'pre']
         julia-arch: [x64]
         os: [ubuntu-latest, windows-latest, macOS-latest]
+        include:
+          - julia-version: '1.10.0'
+            julia-arch: x64
+            os: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v4
