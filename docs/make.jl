@@ -65,7 +65,8 @@ makedocs(;
         "Examples" => [
             "examples/ErdosRenyiThetaFunction.md",
             "examples/QuadraticAssignmentProblems.md",
-            "examples/ReduceAndSolveJuMP.md"
+            "examples/ReduceAndSolveJuMP.md",
+            "examples/SymmetryReductionLayer.md"
         ]
     ],
 )

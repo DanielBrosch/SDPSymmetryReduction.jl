@@ -19,11 +19,13 @@ where `C` and `b` are vectors and `A` is a matrix.
 
 The function [`admissible_subspace`](@ref) finds an optimal admissible partition subspace for a given SDP. An SDP can be restricted to such a subspace without changing its optimum. The returned [`Partition`](@ref)-subspace can then be block-diagonalized using [`blockDiagonalize`](@ref).
 
+Alternatively, [`SDPSymmetryReduction.Optimizer`](@ref) applies these functions automatically to an SDP modeled with [JuMP](https://jump.dev) or [MathOptInterface](https://github.com/jump-dev/MathOptInterface.jl), solves the reduced problem with any SDP solver and maps the solution back to the original problem.
+
 For details on the theory and the implemented algorithms, check out the reference linked in the repository.
 
 ## Examples
 ```@contents
-Pages = ["examples/ErdosRenyiThetaFunction.md", "examples/QuadraticAssignmentProblems.md", "examples/ReduceAndSolveJuMP.md"]
+Pages = ["examples/ErdosRenyiThetaFunction.md", "examples/QuadraticAssignmentProblems.md", "examples/ReduceAndSolveJuMP.md", "examples/SymmetryReductionLayer.md"]
 Depth = 1
 ```
 
